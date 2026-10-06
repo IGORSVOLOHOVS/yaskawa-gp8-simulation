@@ -1,0 +1,34 @@
+name: test
+on:
+  push:
+    branches: [test]
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  prove:
+    name: prove
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test
+          lfs: true
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libeigen3-dev python3
+
+      - name: Verify Environment & Tools
+        run: ./robot init
+
+      - name: Build C++26 Solver
+        run: ./robot build release
+
+      - name: Run C++26 Unit Tests
+        run: ./robot test
+
+      - name: Run High-Speed Benchmark
+        run: ./robot benchmark

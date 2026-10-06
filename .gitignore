@@ -6,6 +6,8 @@
 /install/
 /profiling/
 /cpp_solver/build/
+gmon.out
+callgrind.out
 
 # What the tools cache, wherever they run
 __pycache__/

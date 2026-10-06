@@ -1,0 +1,40 @@
+name: release
+on:
+  push:
+    branches: [release]
+
+jobs:
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libeigen3-dev python3
+
+      - name: Build Release Binary
+        run: ./robot build release
+
+      - name: Run Unit Tests
+        run: ./robot test
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Release v1.0.0
+          body: |
+            ## Yaskawa GP8 Kinematics & Simulation Engine Release v1.0.0
+            - Native C++26 Solver
+            - Zero-allocation LM IK solver
+            - WebGL 3D Dashboard
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
