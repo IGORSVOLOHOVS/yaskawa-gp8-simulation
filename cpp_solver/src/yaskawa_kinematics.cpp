@@ -53,8 +53,8 @@ Eigen::Isometry3d YaskawaKinematics::forwardKinematicsCached(
           0.0, sin_q[3],  cos_q[3];
     T.rotate(R4);
 
-    // Joint 5 (B): Translation (0.15, 0.0, 0.0), Rotation Y(q[4])
-    T.translate(Eigen::Vector3d(0.15, 0.0, 0.0));
+    // Joint 5 (B): Translation (0.0, 0.0, 0.0), Rotation Y(q[4])
+    T.translate(Eigen::Vector3d(0.0, 0.0, 0.0));
     Eigen::Matrix3d R5;
     R5 <<  cos_q[4], 0.0, sin_q[4],
            0.0,      1.0, 0.0,
