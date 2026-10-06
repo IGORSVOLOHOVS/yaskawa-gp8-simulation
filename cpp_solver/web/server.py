@@ -32,6 +32,9 @@ class RobotHandler(http.server.SimpleHTTPRequestHandler):
             super().do_HEAD()
 
     def do_GET(self):
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
         parsed_path = urlparse(self.path)
         if parsed_path.path == '/api/benchmark':
             self.run_benchmark_api()
