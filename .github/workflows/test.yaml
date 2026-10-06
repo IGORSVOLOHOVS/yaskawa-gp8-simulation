@@ -32,3 +32,6 @@ jobs:
 
       - name: Run High-Speed Benchmark
         run: ./robot benchmark
+
+      - name: Generate Wiki Pages
+        run: python3 tools/wiki.py

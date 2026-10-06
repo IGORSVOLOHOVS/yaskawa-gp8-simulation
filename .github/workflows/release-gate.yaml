@@ -34,3 +34,12 @@ jobs:
 
       - name: Run Unit Tests
         run: ./robot test
+
+      - name: Prove Silent Installation
+        run: ./robot install
+
+      - name: Verify Binary Info Status
+        run: ./robot info
+
+      - name: Prove Silent Uninstallation
+        run: ./robot uninstall

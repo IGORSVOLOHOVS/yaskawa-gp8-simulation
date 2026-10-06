@@ -1,13 +1,17 @@
-## Description
-Briefly describe the changes introduced by this Pull Request.
+Issue: #
 
-## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Performance optimization (C++ zero-allocation, lock-free structures, L1 cache alignment)
-- [ ] Documentation update
+### What changed
 
-## Verification
-- [ ] `./robot test` passes with 0 failures
-- [ ] `./robot benchmark` run and verified
-- [ ] 3D Web Dashboard checked at `http://localhost:8080`
+Facts only, 2-3 sentences, not one adjective: the files, the numbers, links
+to the artifacts.
+
+### How it was proven
+
+Facts only, 2-3 sentences: the command, what it printed, the link to the run.
+
+`./robot test` is green, and:
+
+- [ ] the files changed are the ones named above, and no others
+- [ ] tests changed together with the behaviour they prove
+- [ ] new PowerShell parses in 5.1, has no BOM, and checks `$LASTEXITCODE`
+      after every native call

@@ -1,12 +1,14 @@
-# Contributing to Yaskawa GP8 Solver (`waam-manipulator`)
+# Contributing
 
-All contributions follow revision 4.0.0 of **BEST_REQUIREMENTS-v4.0.0.md**.
+1. Open an issue on GitHub: what is wanted, why, and numbered acceptance criteria.
+2. Branch from `test`: `wmp-<issue>/<type>/<slug>`,
+   e.g. `wmp-7/feat/kinematics-solver`.
+3. Work. Run `./robot test` until it is green; commit what the
+   formatter leaves behind.
+4. Commit as `<type>(<scope>): <what changed>`, with `git commit -s`.
+5. Push and open a pull request on GitHub with base `test`, first line
+   `Issue: #<issue>`. The gate runs by itself; merge it once it is green.
+6. `test` into `release` is the lab's move, not yours: manual tests on the
+   cell, a confirmation, and the release makes itself.
 
-## Development Workflow
-
-1. Open an issue on Gitea for every piece of work.
-2. Cut a feature branch using the format: `wmp-<issue>/<type>/<description>`.
-   Supported types: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, `hotfix`, `experiment`.
-3. Write conventional commits: `type(scope): description`.
-4. Run `./robot test` before pushing to ensure all C++26 unit tests pass.
-5. Create a Pull Request into branch `test`.
+The whole of it: [BEST_REQUIREMENTS-v4.0.0.md](file:///home/igors/Downloads/BEST_REQUIREMENTS-v4.0.0.md).

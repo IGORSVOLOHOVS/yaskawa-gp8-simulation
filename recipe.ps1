@@ -73,6 +73,12 @@ switch ($Verb) {
         "Code    : $Code"
         "Version : $Version"
         "Summary : $Summary"
+        $installed = (Test-Path "$root/install/bin/benchmark_cpp") -or (Test-Path "$root/install/bin/test_cpp")
+        if (-not $installed) {
+            "Status  : Not installed"
+            exit 1
+        }
+        "Status  : Installed"
         exit 0
     }
     'test' {

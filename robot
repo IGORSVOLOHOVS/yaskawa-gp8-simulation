@@ -134,6 +134,12 @@ case "${CMD}" in
         echo "Code    : wmp"
         echo "Version : 1.0.0"
         echo "Summary : High-performance C++26 Yaskawa GP8 robot kinematics solver and simulation engine."
+        if [ ! -f "${INSTALL_DIR}/bin/benchmark_cpp" ] && [ ! -f "${INSTALL_DIR}/bin/test_cpp" ]; then
+            echo "Status  : Not installed"
+            exit 1
+        fi
+        echo "Status  : Installed (${INSTALL_DIR}/bin)"
+        exit 0
         ;;
 
     publish)
