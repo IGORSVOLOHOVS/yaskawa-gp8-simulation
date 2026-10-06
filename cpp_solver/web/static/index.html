@@ -213,7 +213,7 @@
 
         loader.load('/meshes/gp8_link_5_b.stl', (geo) => {
             const mesh = new THREE.Mesh(geo, blueMat);
-            mesh.position.set(-0.076, 0, 0); // CAD mesh offset so q5 servo connects seamlessly to q4 arm tube
+            mesh.position.set(-0.04, 0, 0); // Precision CAD mesh offset to seat q5 servo tightly against q4 arm tube
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             j5Group.add(mesh);
