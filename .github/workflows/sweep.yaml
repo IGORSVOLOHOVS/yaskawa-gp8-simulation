@@ -1,0 +1,19 @@
+name: sweep
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  sweep:
+    name: sweep
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prune merged branches
+        run: |
+          git fetch --prune origin
+          echo "Branch sweep complete"

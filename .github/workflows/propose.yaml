@@ -1,0 +1,49 @@
+name: propose
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [test]
+
+jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ libeigen3-dev python3
+
+      - name: Branch name check
+        run: |
+          branch="${{ github.head_ref }}"
+          if [[ -z "$branch" ]]; then
+            echo "::error::the pull request has no head ref"
+            exit 1
+          fi
+          if [[ "$branch" == from-* ]]; then
+            echo "imported branch '$branch' is exempt"
+            exit 0
+          fi
+          if [[ ! -f recipe.ps1 ]]; then
+            echo "::error::recipe.ps1 is missing"
+            exit 1
+          fi
+          code=$(grep -E '^\s*\$Code\s*=' recipe.ps1 | sed -E "s/.*['\"]([^'\"]+)['\"]/\1/")
+          re="^${code}-[1-9][0-9]*/(feat|fix|docs|refactor|test|build|ci|chore|hotfix|experiment)/[a-z0-9]+(-[a-z0-9]+)*$"
+          if [[ ! "$branch" =~ $re ]]; then
+            echo "::error::Branch '$branch' violates $code-<issue>/<type>/<slug>"
+            exit 1
+          fi
+          echo "Branch '$branch' is valid"
+
+      - name: Unit tests, lint, format
+        run: |
+          ./robot init
+          ./robot build release
+          ./robot test
