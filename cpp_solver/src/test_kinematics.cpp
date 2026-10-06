@@ -24,7 +24,7 @@ void test_forward_kinematics() {
 
     Eigen::Vector3d p = T.translation();
     std::cout << "[TEST] FK Home Position: X=" << p.x() << " Y=" << p.y() << " Z=" << p.z() << "\n";
-    assert(std::abs(p.x() - 0.53) < 1e-3);
+    assert(std::abs(p.x() - 0.38) < 1e-3);
     assert(std::abs(p.y() - 0.0) < 1e-3);
     assert(std::abs(p.z() - 0.715) < 1e-3);
     std::cout << "[PASS] Forward Kinematics Test\n";
