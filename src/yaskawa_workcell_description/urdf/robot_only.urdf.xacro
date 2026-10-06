@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot name="yaskawa_gp8" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find yaskawa_workcell_description)/urdf/gp8_macro.xacro" />
+
+  <!-- Direct Yaskawa GP8 Manipulator Instantiation -->
+  <xacro:motoman_gp8 prefix="" />
+
+</robot>

@@ -1,0 +1,13 @@
+planner_configs:
+  RRTConnectkConfigDefault:
+    type: geometric::RRTConnect
+    range: 0.0
+  RRTstarConfigDefault:
+    type: geometric::RRTstar
+    range: 0.0
+
+arm:
+  default_planner_config: RRTConnectkConfigDefault
+  planner_configs:
+    - RRTConnectkConfigDefault
+    - RRTstarConfigDefault

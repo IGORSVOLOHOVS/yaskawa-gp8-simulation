@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="motoman_gp8" params="prefix">
+
+    <!-- Global Materials -->
+    <material name="yaskawa_blue">
+      <color rgba="0.08 0.38 0.78 1.0"/>
+    </material>
+    <material name="yaskawa_silver">
+      <color rgba="0.82 0.84 0.87 1.0"/>
+    </material>
+    <material name="yaskawa_dark">
+      <color rgba="0.15 0.15 0.15 1.0"/>
+    </material>
+
+    <!-- Base Link -->
+    <link name="${prefix}base_link">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_base_link.stl"/>
+        </geometry>
+        <material name="yaskawa_blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_base_link.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Link 1 (S-axis) -->
+    <link name="${prefix}link_1_s">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_1_s.stl"/>
+        </geometry>
+        <material name="yaskawa_blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_1_s.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_1_s" type="revolute">
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}link_1_s"/>
+      <origin xyz="0 0 0.33" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-2.967" upper="2.967" effort="100.0" velocity="7.85"/>
+    </joint>
+
+    <!-- Link 2 (L-axis) -->
+    <link name="${prefix}link_2_l">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_2_l.stl"/>
+        </geometry>
+        <material name="yaskawa_silver"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_2_l.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_2_l" type="revolute">
+      <parent link="${prefix}link_1_s"/>
+      <child link="${prefix}link_2_l"/>
+      <origin xyz="0.04 0 0.0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.134" upper="2.530" effort="100.0" velocity="6.70"/>
+    </joint>
+
+    <!-- Link 3 (U-axis) -->
+    <link name="${prefix}link_3_u">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_3_u.stl"/>
+        </geometry>
+        <material name="yaskawa_blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_3_u.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_3_u" type="revolute">
+      <parent link="${prefix}link_2_l"/>
+      <child link="${prefix}link_3_u"/>
+      <origin xyz="0 0 0.345" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.221" upper="3.316" effort="100.0" velocity="9.07"/>
+    </joint>
+
+    <!-- Link 4 (R-axis) -->
+    <link name="${prefix}link_4_r">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_4_r.stl"/>
+        </geometry>
+        <material name="yaskawa_silver"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_4_r.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_4_r" type="revolute">
+      <parent link="${prefix}link_3_u"/>
+      <child link="${prefix}link_4_r"/>
+      <origin xyz="0.34 0 0.04" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-3.316" upper="3.316" effort="50.0" velocity="9.60"/>
+    </joint>
+
+    <!-- Link 5 (B-axis) -->
+    <link name="${prefix}link_5_b">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_5_b.stl"/>
+        </geometry>
+        <material name="yaskawa_blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_5_b.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_5_b" type="revolute">
+      <parent link="${prefix}link_4_r"/>
+      <child link="${prefix}link_5_b"/>
+      <origin xyz="0.15 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-2.356" upper="2.356" effort="50.0" velocity="9.60"/>
+    </joint>
+
+    <!-- Link 6 (T-axis) -->
+    <link name="${prefix}link_6_t">
+      <visual>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_6_t.stl"/>
+        </geometry>
+        <material name="yaskawa_dark"/>
+      </visual>
+      <collision>
+        <geometry>
+          <mesh filename="package://yaskawa_workcell_description/meshes/visual/gp8_link_6_t.stl"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}joint_6_t" type="revolute">
+      <parent link="${prefix}link_5_b"/>
+      <child link="${prefix}link_6_t"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-6.283" upper="6.283" effort="30.0" velocity="17.45"/>
+    </joint>
+
+    <link name="${prefix}flange"/>
+
+    <joint name="${prefix}joint_flange" type="fixed">
+      <parent link="${prefix}link_6_t"/>
+      <child link="${prefix}flange"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- ROS 2 Control Hardware Interface -->
+    <ros2_control name="${prefix}YaskawaGP8System" type="system">
+      <hardware>
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="calculate_dynamics">true</param>
+      </hardware>
+      <joint name="${prefix}joint_1_s">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="${prefix}joint_2_l">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="${prefix}joint_3_u">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="${prefix}joint_4_r">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="${prefix}joint_5_b">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="${prefix}joint_6_t">
+        <command_interface name="position"/>
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+
+  </xacro:macro>
+</robot>

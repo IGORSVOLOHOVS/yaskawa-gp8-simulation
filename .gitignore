@@ -1,0 +1,19 @@
+# Built, fetched and scratch - only ever at the root
+/dist/
+/build/
+/out/
+/tmp/
+/install/
+/profiling/
+/cpp_solver/build/
+
+# What the tools cache, wherever they run
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Prompt text, and one person's Claude Code settings
+.claude/logs/
+.claude/settings.local.json

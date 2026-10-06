@@ -1,0 +1,7 @@
+[
+  {
+    "id": 1,
+    "title": "3D Web Dashboard Visual Motion Test",
+    "description": "Verify that moving joint sliders in the web dashboard smoothly rotates the Yaskawa GP8 3D robot arm links at 60 FPS."
+  }
+]

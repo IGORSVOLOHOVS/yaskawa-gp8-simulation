@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yaskawa GP8 C++26 Real Physical Model 3D Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.88);
+            --accent-color: #0284c7;
+            --text-color: #f8fafc;
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); overflow: hidden; height: 100vh; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .overlay-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            width: 380px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 { font-size: 1.2rem; font-weight: 600; color: #38bdf8; margin-bottom: 4px; }
+        .subtitle { font-size: 0.75rem; color: #94a3b8; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .control-group { margin-bottom: 10px; }
+        .control-label { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; }
+        .val-badge { font-family: monospace; color: #38bdf8; }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            outline: none;
+            appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        .btn:hover { background: linear-gradient(135deg, #0369a1, #075985); }
+
+        #output-card {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            width: 420px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+</head>
+<body>
+    <div id="canvas-container"></div>
+
+    <div class="overlay-panel">
+        <h1>Yaskawa GP8 Real CAD Model</h1>
+        <div class="subtitle">C++26 Engine & Real Mesh Visualizer</div>
+
+        <div id="sliders"></div>
+
+        <button class="btn" onclick="runCppBenchmark()">⚡ Run C++26 High-Speed Benchmark</button>
+    </div>
+
+    <div id="output-card">⚡ Console Ready...\nEngine: C++26 (Eigen3 + Senders/Receivers + RT String Logger)\nVisualizer: WebGL STL Mesh Loader</div>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100);
+        camera.position.set(1.2, 1.0, 1.2);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 0.4, 0);
+        controls.update();
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        dirLight.position.set(3, 5, 3);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const grid = new THREE.GridHelper(4, 40, 0x38bdf8, 0x334155);
+        scene.add(grid);
+
+        // Materials matching Yaskawa GP8 Official Colors
+        const blueMat = new THREE.MeshStandardMaterial({ color: 0x1462c4, metalness: 0.4, roughness: 0.3 });
+        const silverMat = new THREE.MeshStandardMaterial({ color: 0xd1d5db, metalness: 0.6, roughness: 0.2 });
+        const darkMat = new THREE.MeshStandardMaterial({ color: 0x262626, metalness: 0.8, roughness: 0.2 });
+
+        const loader = new THREE.STLLoader();
+
+        // Convert ROS Z-Up coordinate system to Three.js Y-Up
+        const robotRootGroup = new THREE.Group();
+        robotRootGroup.rotation.x = -Math.PI / 2;
+        scene.add(robotRootGroup);
+
+        // Robot Kinematic Groups Hierarchy matching URDF Tree
+        const baseGroup = new THREE.Group();
+        const j1Group = new THREE.Group();
+        const j2Group = new THREE.Group();
+        const j3Group = new THREE.Group();
+        const j4Group = new THREE.Group();
+        const j5Group = new THREE.Group();
+        const j6Group = new THREE.Group();
+
+        robotRootGroup.add(baseGroup);
+
+        // Joint origins strictly matching URDF specification
+        j1Group.position.set(0, 0, 0.33);
+        baseGroup.add(j1Group);
+
+        j2Group.position.set(0.04, 0, 0.0);
+        j1Group.add(j2Group);
+
+        j3Group.position.set(0, 0, 0.345);
+        j2Group.add(j3Group);
+
+        j4Group.position.set(0.34, 0, 0.04); // Joint 4 R-axis origin at 0.34m from Joint 3
+        j3Group.add(j4Group);
+
+        j5Group.position.set(0.15, 0, 0.0); // Joint 5 B-axis origin at 0.15m from Joint 4
+        j4Group.add(j5Group);
+
+        j6Group.position.set(0, 0, 0.0);
+        j5Group.add(j6Group);
+
+        // Load Real CAD Mesh Models
+        loader.load('/meshes/gp8_base_link.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, blueMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            baseGroup.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_1_s.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, blueMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j1Group.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_2_l.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, silverMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j2Group.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_3_u.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, blueMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j3Group.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_4_r.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, silverMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j4Group.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_5_b.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, blueMat);
+            mesh.position.set(-0.076, 0, 0); // CAD mesh offset so q5 servo connects seamlessly to q4 arm tube
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j5Group.add(mesh);
+        });
+
+        loader.load('/meshes/gp8_link_6_t.stl', (geo) => {
+            const mesh = new THREE.Mesh(geo, darkMat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            j6Group.add(mesh);
+        });
+
+        // Joint Sliders & Controls
+        const jointNames = ['S-Axis (q1)', 'L-Axis (q2)', 'U-Axis (q3)', 'R-Axis (q4)', 'B-Axis (q5)', 'T-Axis (q6)'];
+        const jointMinMax = [
+            [-2.967, 2.967], [-1.134, 2.530], [-1.221, 3.316],
+            [-3.316, 3.316], [-2.356, 2.356], [-6.283, 6.283]
+        ];
+
+        const slidersContainer = document.getElementById('sliders');
+        const jointValues = [0, 0, 0, 0, 0, 0];
+
+        jointNames.forEach((name, idx) => {
+            const div = document.createElement('div');
+            div.className = 'control-group';
+            div.innerHTML = `
+                <div class="control-label">
+                    <span>${name}</span>
+                    <span class="val-badge" id="val-${idx}">0.00 rad</span>
+                </div>
+                <input type="range" id="slider-${idx}" min="${jointMinMax[idx][0]}" max="${jointMinMax[idx][1]}" step="0.01" value="0">
+            `;
+            slidersContainer.appendChild(div);
+
+            document.getElementById(`slider-${idx}`).addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                jointValues[idx] = val;
+                document.getElementById(`val-${idx}`).textContent = `${val.toFixed(2)} rad`;
+                updateRobotModel();
+            });
+        });
+
+        // Update joint rotations according to URDF revolute axes
+        function updateRobotModel() {
+            j1Group.rotation.z = jointValues[0]; // joint_1_s: axis Z
+            j2Group.rotation.y = jointValues[1]; // joint_2_l: axis Y
+            j3Group.rotation.y = jointValues[2]; // joint_3_u: axis Y
+            j4Group.rotation.x = jointValues[3]; // joint_4_r: axis X
+            j5Group.rotation.y = jointValues[4]; // joint_5_b: axis Y
+            j6Group.rotation.x = jointValues[5]; // joint_6_t: axis X
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function runCppBenchmark() {
+            const out = document.getElementById('output-card');
+            out.textContent = "🚀 Invoking Native C++26 Engine Benchmark...\nExecuting /cpp_solver/build/benchmark_cpp...";
+            fetch('/api/benchmark')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        out.textContent = "✅ NATIVE C++26 BENCHMARK SUCCESSFUL:\n\n" + data.output;
+                    } else {
+                        out.textContent = "❌ ERROR: " + data.message;
+                    }
+                })
+                .catch(err => {
+                    out.textContent = "❌ FAILED: " + err;
+                });
+        }
+    </script>
+</body>
+</html>

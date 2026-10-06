@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<robot name="yaskawa_workcell" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find yaskawa_workcell_description)/urdf/gp8_macro.xacro" />
+
+  <!-- World Frame -->
+  <link name="world"/>
+
+  <!-- Floor Link -->
+  <link name="floor">
+    <visual>
+      <geometry>
+        <box size="4.0 4.0 0.02"/>
+      </geometry>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <material name="floor_grey">
+        <color rgba="0.3 0.33 0.35 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="4.0 4.0 0.02"/>
+      </geometry>
+      <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="world_to_floor" type="fixed">
+    <parent link="world"/>
+    <child link="floor"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Worktable Link -->
+  <link name="worktable">
+    <visual>
+      <geometry>
+        <box size="1.2 0.9 0.75"/>
+      </geometry>
+      <origin xyz="0 0 0.375" rpy="0 0 0"/>
+      <material name="table_metal">
+        <color rgba="0.15 0.18 0.22 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="1.2 0.9 0.75"/>
+      </geometry>
+      <origin xyz="0 0 0.375" rpy="0 0 0"/>
+    </collision>
+  </link>
+
+  <joint name="floor_to_table" type="fixed">
+    <parent link="floor"/>
+    <child link="worktable"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Instantiate Motoman GP8 Arm on top of worktable -->
+  <xacro:motoman_gp8 prefix="" />
+
+  <joint name="table_to_robot" type="fixed">
+    <parent link="worktable"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.75" rpy="0 0 0"/>
+  </joint>
+
+  <!-- ros2_control Hardware Tag for MotoROS2 / Simulation -->
+  <ros2_control name="YaskawaSystem" type="system">
+    <hardware>
+      <plugin>mock_components/GenericSystem</plugin>
+      <param name="calculate_dynamics">true</param>
+    </hardware>
+    <joint name="joint_1_s">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_2_l">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_3_u">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_4_r">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_5_b">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+    <joint name="joint_6_t">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </ros2_control>
+
+</robot>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manual Test Runner</title>
+    <style>
+        body { font-family: monospace; background: #121212; color: #e0e0e0; padding: 20px; }
+        .card { background: #1e1e1e; border: 1px solid #333; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
+        button { background: #007acc; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Manual Test Harness</h1>
+    <div id="tests"></div>
+    <script>
+        fetch('/api/tests')
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('tests');
+                data.forEach(t => {
+                    container.innerHTML += `<div class="card"><h3>#${t.id}: ${t.title}</h3><p>${t.description}</p><button onclick="pass(${t.id})">Mark Passed</button></div>`;
+                });
+            });
+        function pass(id) { alert("Test #" + id + " Passed!"); }
+    </script>
+</body>
+</html>

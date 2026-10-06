@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot name="yaskawa_workcell">
+
+    <!-- Planning Group: arm -->
+    <group name="arm">
+        <chain base_link="base_link" tip_link="flange"/>
+    </group>
+
+    <!-- Group States (Predefined Poses) -->
+    <group_state name="home" group="arm">
+        <joint name="joint_1_s" value="0"/>
+        <joint name="joint_2_l" value="0"/>
+        <joint name="joint_3_u" value="0"/>
+        <joint name="joint_4_r" value="0"/>
+        <joint name="joint_5_b" value="0"/>
+        <joint name="joint_6_t" value="0"/>
+    </group_state>
+
+    <group_state name="ready" group="arm">
+        <joint name="joint_1_s" value="0"/>
+        <joint name="joint_2_l" value="0.3"/>
+        <joint name="joint_3_u" value="0.5"/>
+        <joint name="joint_4_r" value="0"/>
+        <joint name="joint_5_b" value="-0.8"/>
+        <joint name="joint_6_t" value="0"/>
+    </group_state>
+
+    <!-- End Effector -->
+    <end_effector name="flange_ee" parent_link="flange" group="arm"/>
+
+    <!-- Disable Collisions between adjacent links -->
+    <disable_collisions link1="base_link" link2="link_1_s" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="worktable" reason="Adjacent"/>
+    <disable_collisions link1="base_link" link2="floor" reason="Never"/>
+    <disable_collisions link1="worktable" link2="floor" reason="Adjacent"/>
+
+    <disable_collisions link1="link_1_s" link2="link_2_l" reason="Adjacent"/>
+    <disable_collisions link1="link_2_l" link2="link_3_u" reason="Adjacent"/>
+    <disable_collisions link1="link_3_u" link2="link_4_r" reason="Adjacent"/>
+    <disable_collisions link1="link_4_r" link2="link_5_b" reason="Adjacent"/>
+    <disable_collisions link1="link_5_b" link2="link_6_t" reason="Adjacent"/>
+
+</robot>

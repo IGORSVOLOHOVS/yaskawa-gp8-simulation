@@ -1,0 +1,32 @@
+name: C++26 Real-Time Engine & Solver CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ libeigen3-dev python3
+
+    - name: Verify Environment & Tools
+      run: ./robot init
+
+    - name: Build C++26 Release Binary
+      run: ./robot build release
+
+    - name: Run C++26 Unit Test Suite
+      run: ./robot test
+
+    - name: Run High-Performance Benchmark
+      run: ./robot benchmark
