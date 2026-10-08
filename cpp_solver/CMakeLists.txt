@@ -21,6 +21,7 @@ include_directories(
 add_library(yaskawa_kinematics STATIC
     src/yaskawa_kinematics.cpp
     src/yaskawa_trajectory.cpp
+    src/robot_physical_tree.cpp
 )
 target_link_libraries(yaskawa_kinematics PUBLIC Eigen3::Eigen Threads::Threads)
 
@@ -32,9 +33,9 @@ target_link_libraries(test_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads:
 
 # Profile-Specific Compilation Flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(yaskawa_kinematics PRIVATE -O3 -march=native -ffast-math)
-    target_compile_options(benchmark_cpp PRIVATE -O3 -march=native -ffast-math)
-    target_compile_options(test_cpp PRIVATE -O3 -march=native -ffast-math)
+    target_compile_options(yaskawa_kinematics PRIVATE -O3 -ffast-math)
+    target_compile_options(benchmark_cpp PRIVATE -O3 -ffast-math)
+    target_compile_options(test_cpp PRIVATE -O3 -ffast-math)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(yaskawa_kinematics PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(benchmark_cpp PRIVATE -O0 -g -fsanitize=address)
@@ -42,9 +43,9 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_libraries(benchmark_cpp PRIVATE -fsanitize=address)
     target_link_libraries(test_cpp PRIVATE -fsanitize=address)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
-    target_compile_options(yaskawa_kinematics PRIVATE -O3 -pg -g -march=native)
-    target_compile_options(benchmark_cpp PRIVATE -O3 -pg -g -march=native)
-    target_compile_options(test_cpp PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(yaskawa_kinematics PRIVATE -O3 -pg -g)
+    target_compile_options(benchmark_cpp PRIVATE -O3 -pg -g)
+    target_compile_options(test_cpp PRIVATE -O3 -pg -g)
     target_link_libraries(benchmark_cpp PRIVATE -pg)
     target_link_libraries(test_cpp PRIVATE -pg)
 elseif(CMAKE_BUILD_TYPE STREQUAL "PGO_Generate")

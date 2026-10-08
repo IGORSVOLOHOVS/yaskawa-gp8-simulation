@@ -59,7 +59,8 @@ case "${CMD}" in
 
         echo "--> Building Yaskawa C++26 Solver with Profile: [${PROFILE}]..."
         cmake -B "${BUILD_DIR}" -S "${CPP_DIR}" -DCMAKE_BUILD_TYPE="${PROFILE}"
-        cmake --build "${BUILD_DIR}" -j$(nproc)
+        NPROC=$(nproc 2>/dev/null || echo 2)
+        cmake --build "${BUILD_DIR}" -j${NPROC}
         echo "--> Build finished successfully! Executables located in ${BUILD_DIR}"
         ;;
 
