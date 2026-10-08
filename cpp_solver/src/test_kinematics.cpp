@@ -8,6 +8,8 @@
 #include "rt_logger.hpp"
 #include "compressed_logger.hpp"
 #include "atomic_structures.hpp"
+#include "robot_physical_tree.hpp"
+#include <fstream>
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -187,6 +189,21 @@ void test_std_execution_policies() {
     std::cout << "[PASS] std::execution Parallel Policies Test\n";
 }
 
+void test_physical_component_tree() {
+    std::cout << "[TEST] Testing 1000+ Physical Component Reflection & Tree Integrity...\n";
+    size_t count = 0;
+    std::string err_msg;
+    bool ok = yaskawa::physical::verify_physical_tree_integrity(count, err_msg);
+    std::cout << "  - Total Physical Components Registered: " << count << "\n";
+    std::cout << "  - Status: " << err_msg << "\n";
+    assert(ok == true);
+    assert(count == 1353);
+    std::ofstream out("/tmp/cpp_tree_export.json");
+    out << yaskawa::physical::export_tree_to_json();
+    out.close();
+    std::cout << "[PASS] 1000+ Physical Component Reflection & Tree Integrity Test (Exact 1,353 Parts Verified)\n";
+}
+
 int main() {
     std::cout << "====================================================\n";
     std::cout << "      RUNNING YASKAWA C++26 UNIT TEST SUITE         \n";
@@ -200,6 +217,7 @@ int main() {
     test_bitfield_logger();
     test_nvidia_stdexec_channel();
     test_std_execution_policies();
+    test_physical_component_tree();
 
     std::cout << "====================================================\n";
     std::cout << "          ALL UNIT TESTS PASSED SUCCESSFULLY        \n";
