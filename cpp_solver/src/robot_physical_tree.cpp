@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <expected>
-#include <flat_set>
+#include <unordered_set>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -159,7 +159,7 @@ void populate_section_1(inplace_vector<ComponentSpec, 1400>& list) {
             "Base Lifting Eye Bolt Threaded Insert M12 #1", "Base Lifting Eye Bolt Threaded Insert M12 #2"
         };
         
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(38))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(38))) {
             std::string id = "sec1_part_" + std::to_string(idx + 114);
             add(id, base_aux_names[idx], "sec_1", 4, 1, "Base & S-Axis", "Hardware & Electrical",
                 "Brass / Stainless Steel SUS304 / SUJ2", "Yaskawa Parts", "GP8-BS-PART-" + pad3(idx + 1),
@@ -220,7 +220,7 @@ void populate_section_2(inplace_vector<ComponentSpec, 1400>& list) {
             "Lower Arm FEA Stiffener Rib Plate Left", "Lower Arm FEA Stiffener Rib Plate Right",
             "Lower Arm Pivot Shaft Dowel Pin 12x40 #1", "Lower Arm Pivot Shaft Dowel Pin 12x40 #2"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(64))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(64))) {
             std::string id = "l_arm_part_" + std::to_string(idx + 1);
             add(id, l_arm_names[idx], "sec_2", 4, 2, "L-Axis & Lower Arm", "Mechanical & Seals",
                 "SUJ2 Steel / FKM Rubber / Aluminum 6061", "Yaskawa / THK / NOK", "GP8-LA-PART-" + pad3(idx + 1),
@@ -277,7 +277,7 @@ void populate_section_3(inplace_vector<ComponentSpec, 1400>& list) {
             "U-Axis Double Lip Shaft Oil Seal 50x68x9", "U-Axis Internal Precision Shim Washer 0.1mm",
             "U-Axis Internal Precision Shim Washer 0.2mm", "U-Axis Home Position Inductive Sensor Target Flag"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(44))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(44))) {
             std::string id = "u_arm_part_" + std::to_string(idx + 1);
             add(id, u_arm_names[idx], "sec_3", 4, 3, "U-Axis & Upper Arm", "Hardware & Fittings",
                 "SUS304 / Brass / SMC Polyurethane", "SMC / Festo / Bossard", "GP8-UA-PART-" + pad3(idx + 1),
@@ -316,7 +316,7 @@ void populate_section_4(inplace_vector<ComponentSpec, 1400>& list) {
             "R-Wrist Socket Head Cap Screw M4x14 #6", "R-Wrist Alignment Dowel Pin 6x18 #1",
             "R-Wrist Alignment Dowel Pin 6x18 #2", "R-Wrist Internal Harness Conduit Bushing"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(24))) {
             std::string id = "r_wrist_part_" + std::to_string(idx + 1);
             add(id, r_wrist_names[idx], "sec_4", 4, 4, "R-Axis & Wrist", "Mechanical Components",
                 "Chrome Steel / FKM", "THK / NSK / Bossard", "GP8-R4-PART-" + pad3(idx + 1),
@@ -355,7 +355,7 @@ void populate_section_5(inplace_vector<ComponentSpec, 1400>& list) {
             "B-Wrist Socket Head Screw M3x10 #3", "B-Wrist Socket Head Screw M3x10 #4",
             "B-Wrist Socket Head Screw M3x10 #5", "B-Wrist Socket Head Screw M3x10 #6"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(24))) {
             std::string id = "b_wrist_part_" + std::to_string(idx + 1);
             add(id, b_wrist_names[idx], "sec_5", 4, 5, "B-Axis & Wrist", "Mechanical Components",
                 "SUS304 / SUJ2 Steel", "Harmonic Drive / THK", "GP8-B5-PART-" + pad3(idx + 1),
@@ -396,7 +396,7 @@ void populate_section_6(inplace_vector<ComponentSpec, 1400>& list) {
             "M12 Connector Gold Plated Pin Contact #8", "M12 Connector Silicone O-Ring Seal IP67",
             "T-Axis Cross Roller Bearing CRB-40 Outer Ring", "T-Axis Cross Roller Bearing CRB-40 Inner Ring"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(20))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(20))) {
             std::string id = "t_flange_part_" + std::to_string(idx + 1);
             add(id, t_flange_names[idx], "sec_6", 4, 6, "T-Axis & Tool Flange", "Fasteners & Seals",
                 "SUS304 / FKM / Brass", "Bossard / NOK", "GP8-T6-PART-" + pad3(idx + 1),
@@ -433,7 +433,7 @@ void populate_section_7(inplace_vector<ComponentSpec, 1400>& list) {
             "Harting Han-3A Heavy Duty Motor Power Base Connector Plug", "Amphenol Military-Spec Circular Encoder Base Connector Bayonet",
             "PE Protective Ground Braid Tinned Copper 16mm2 300mm", "Cable Harness Internal Polyethylene Spiral Wrap Sleeve 10m"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(24))) {
             std::string id = "harness_part_" + std::to_string(idx + 1);
             add(id, harness_names[idx], "sec_7", 3, 7, "Cable Harnesses", "Cable Lines",
                 "High-Flex PUR Jacket / Shielded Copper", "LappKabel / Harting", "GP8-CAB-PART-" + pad3(idx + 1),
@@ -475,7 +475,7 @@ void populate_section_8(inplace_vector<ComponentSpec, 1400>& list) {
             "Copper Heavy Duty Power Busbar W-Phase", "Cabinet Air Intake Filter Mat Dust Guard",
             "YRC1000 Cabinet Door Key Lock Assembly", "YRC1000 Door Rubber Sealing Gasket Strip 2m"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(22))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(22))) {
             std::string id = "yrc_pwr_part_" + std::to_string(idx + 1);
             add(id, yrc_pwr_names[idx], "sec_8", 4, 8, "YRC1000 Power", "Electrical & Heat Sinks",
                 "Copper / Nichicon Cap / FR4", "Nichicon / LEM / Omron", "GP8-PWR-PART-" + pad3(idx + 1),
@@ -518,7 +518,7 @@ void populate_section_9(inplace_vector<ComponentSpec, 1400>& list) {
             "Precision Temperature Sensor IC LM75", "FPGA Configuration Flash Memory SPI 64MB",
             "DC-DC Step-Down Voltage Regulator 5V 5A", "DC-DC Step-Down Voltage Regulator 3.3V 3A"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(20))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(20))) {
             std::string id = "yrc_ctrl_part_" + std::to_string(idx + 1);
             add(id, yrc_ctrl_names[idx], "sec_9", 4, 9, "YRC1000 Control", "IC & Connectors",
                 "Silicon / FR4 / Gold Plated Pins", "TI / STMicroelectronics / Samtec", "GP8-CTL-PART-" + pad3(idx + 1),
@@ -555,7 +555,7 @@ void populate_section_10(inplace_vector<ComponentSpec, 1400>& list) {
             "Teach Pendant Internal Li-Ion Battery Back-up 3.7V", "Teach Pendant Membrane Keypad Mode Switch",
             "Teach Pendant Internal Speaker Beeper 85dB", "Teach Pendant Leather Hand Strap Mount"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(12))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(12))) {
             std::string id = "pendant_part_" + std::to_string(idx + 1);
             add(id, pendant_names[idx], "sec_10", 4, 10, "Teach Pendant", "HMI Components",
                 "PC-ABS Plastic / Rubber / Copper", "Yaskawa / Amphenol", "GP8-TP-PART-" + pad3(idx + 1),
@@ -607,7 +607,7 @@ void populate_section_11(inplace_vector<ComponentSpec, 1400>& list) {
             "Gripper Coupler Mounting Socket Screw M6x20 #1", "Gripper Coupler Mounting Socket Screw M6x20 #2",
             "Gripper Coupler Mounting Socket Screw M6x20 #3", "Gripper Coupler Mounting Socket Screw M6x20 #4"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(22))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(22))) {
             std::string id = "gripper_part_" + std::to_string(idx + 1);
             add(id, gripper_part_names[idx], "sec_11", 4, 11, "End-Effector Gripper", "Hardware & Sensors",
                 "SUS304 / Brass / SMC Polyurethane", "SMC / Schunk / Bossard", "GP8-GRP-PART-" + pad3(idx + 1),
@@ -651,7 +651,7 @@ void populate_section_12(inplace_vector<ComponentSpec, 1400>& list) {
             "Keyence Safety Light Curtain Transmitter Column 1200mm", "Keyence Safety Light Curtain Receiver Column 1200mm",
             "Workcell Cable Duct PVC 80x60mm Gray 2m", "Workcell Grounding Copper Bus Braid 25mm2 500mm"
         };
-        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(26))) {
+        for (size_t idx : std::views::iota(size_t{0}, static_cast<size_t>(26))) {
             std::string id = "workcell_part_" + std::to_string(idx + 1);
             add(id, workcell_part_names[idx], "sec_12", 4, 12, "Workcell Environment", "Guarding & Hardware",
                 "Steel Grade 10.9 / Aluminum / Polycarbonate", "Bosch Rexroth / Omron / Keyence", "GP8-WC-PART-" + pad3(idx + 1),
@@ -789,7 +789,7 @@ std::string export_tree_to_json() {
        << "  \"total_count\": " << all.size() << ",\n"
        << "  \"components\": [\n";
 
-    for (size_t i : std::views::iota(0uz, all.size())) {
+    for (size_t i : std::views::iota(size_t{0}, all.size())) {
         const auto& item = all[i];
         ss << "    {\n"
            << "      \"id\": \"" << escape_json(item.id) << "\",\n"
@@ -821,7 +821,8 @@ std::expected<size_t, std::string> verify_tree_integrity() noexcept {
         return std::unexpected("Component count is less than 1000: count = " + std::to_string(all.size()));
     }
 
-    std::flat_set<std::string> id_map;
+    std::unordered_set<std::string> id_map;
+    id_map.reserve(all.size());
 
     for (const auto& comp : all) {
         if (comp.id.empty()) {
