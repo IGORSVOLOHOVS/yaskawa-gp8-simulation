@@ -10,8 +10,7 @@
 #include "atomic_structures.hpp"
 #include "robot_physical_tree.hpp"
 #include <chrono>
-#include <iostream>
-#include <iomanip>
+#include <print>
 #include <vector>
 #include <numeric>
 #include <random>
@@ -23,17 +22,17 @@
 using namespace yaskawa;
 
 int main() {
-    std::cout << "=================================================================\n";
-    std::cout << "    YASKAWA GP8 C++26 REAL-TIME SOLVER & ATOMICS BENCHMARK       \n";
-    std::cout << "=================================================================\n\n";
+    std::println("=================================================================");
+    std::println("    YASKAWA GP8 C++26 REAL-TIME SOLVER & ATOMICS BENCHMARK       ");
+    std::println("=================================================================\n");
 
     YaskawaKinematics solver;
     QuinticTrajectoryPlanner planner;
     ThreadPoolScheduler thread_pool;
     BitFieldLogger bit_logger("profiling/ultra_compact_trace.bin");
 
-    std::cout << "System CPU Cores Active in Thread Pool: " << thread_pool.workerCount() << "\n";
-    std::cout << "Reflected Type Name: " << meta::reflect_type_name<YaskawaKinematics>() << "\n\n";
+    std::println("System CPU Cores Active in Thread Pool: {}", thread_pool.workerCount());
+    std::println("Reflected Type Name: {}\n", meta::reflect_type_name<YaskawaKinematics>());
 
     // -------------------------------------------------------------------------
     // Benchmark 1: Forward Kinematics (FK) Micro-Benchmark
@@ -57,11 +56,11 @@ int main() {
     Eigen::Isometry3d T_sample = solver.forwardKinematics(q_test);
     bit_logger.logBitFrame(1, q_test);
 
-    std::cout << "1. FORWARD KINEMATICS (FK) SPEED:\n";
-    std::cout << "   - Total Iterations : " << fk_iterations << "\n";
-    std::cout << "   - Total Time       : " << std::fixed << std::setprecision(3) << fk_duration.count() / 1000.0 << " ms\n";
-    std::cout << "   - Average Latency  : " << std::setprecision(1) << (fk_avg_us * 1000.0) << " ns (" << fk_avg_us << " us)\n";
-    std::cout << "   - Throughput       : " << std::setprecision(0) << fk_ops_per_sec << " FK calls / sec\n\n";
+    std::println("1. FORWARD KINEMATICS (FK) SPEED:");
+    std::println("   - Total Iterations : {}", fk_iterations);
+    std::println("   - Total Time       : {:.3f} ms", fk_duration.count() / 1000.0);
+    std::println("   - Average Latency  : {:.1f} ns ({:.3f} us)", fk_avg_us * 1000.0, fk_avg_us);
+    std::println("   - Throughput       : {:.0f} FK calls / sec\n", fk_ops_per_sec);
 
     // -------------------------------------------------------------------------
     // Benchmark 2: Lock-Free Atomic Structures & Memory Orders Throughput
@@ -103,11 +102,11 @@ int main() {
     std::chrono::duration<double, std::milli> tb_ms = tb_end - tb_start;
     double tb_ops_per_sec = (tb_iterations * 2) / (tb_ms.count() / 1000.0);
 
-    std::cout << "2. LOCK-FREE ATOMIC STRUCTURES & MEMORY ORDERS:\n";
-    std::cout << "   - Atomic Increment (std::memory_order_relaxed) : " << std::setprecision(0) << atomic_ops_per_sec << " ops / sec\n";
-    std::cout << "   - Lock-Free SPSC Queue Throughput              : " << std::setprecision(0) << spsc_ops_per_sec << " push+pop / sec\n";
-    std::cout << "   - Lock-Free Triple Buffer Throughput          : " << std::setprecision(0) << tb_ops_per_sec << " write+read / sec\n";
-    std::cout << "   - Hardware Lock-Free Guarantee                 : " << (counter.isLockFree() ? "TRUE (Lock-Free)" : "FALSE") << "\n\n";
+    std::println("2. LOCK-FREE ATOMIC STRUCTURES & MEMORY ORDERS:");
+    std::println("   - Atomic Increment (std::memory_order_relaxed) : {:.0f} ops / sec", atomic_ops_per_sec);
+    std::println("   - Lock-Free SPSC Queue Throughput              : {:.0f} push+pop / sec", spsc_ops_per_sec);
+    std::println("   - Lock-Free Triple Buffer Throughput          : {:.0f} write+read / sec", tb_ops_per_sec);
+    std::println("   - Hardware Lock-Free Guarantee                 : {}\n", counter.isLockFree() ? "TRUE (Lock-Free)" : "FALSE");
 
     // -------------------------------------------------------------------------
     // Benchmark 3: Parallel std::execution::par_unseq IK Solving
@@ -140,11 +139,11 @@ int main() {
     double ik_parallel_rate = (100.0 * success_count.load()) / ik_total_samples;
     double ik_parallel_ops_per_sec = (ik_total_samples) / (ik_wall_ms.count() / 1000.0);
 
-    std::cout << "3. PARALLEL IK (C++26 std::execution::par_unseq Policy):\n";
-    std::cout << "   - Total Poses Solved       : " << ik_total_samples << "\n";
-    std::cout << "   - Parallel Wall-Clock Time : " << std::setprecision(2) << ik_wall_ms.count() << " ms\n";
-    std::cout << "   - Overall IK Success Rate  : " << std::setprecision(1) << ik_parallel_rate << " %\n";
-    std::cout << "   - Parallel Throughput      : " << std::setprecision(0) << ik_parallel_ops_per_sec << " IK solutions / sec\n\n";
+    std::println("3. PARALLEL IK (C++26 std::execution::par_unseq Policy):");
+    std::println("   - Total Poses Solved       : {}", ik_total_samples);
+    std::println("   - Parallel Wall-Clock Time : {:.2f} ms", ik_wall_ms.count());
+    std::println("   - Overall IK Success Rate  : {:.1f} %", ik_parallel_rate);
+    std::println("   - Parallel Throughput      : {:.0f} IK solutions / sec\n", ik_parallel_ops_per_sec);
 
     // -------------------------------------------------------------------------
     // Benchmark 4: C++23 std::flat_map vs std::unordered_map Component Lookup
@@ -191,17 +190,15 @@ int main() {
     std::chrono::duration<double, std::milli> unord_ms = unord_end - unord_start;
     double unord_ops_per_sec = (map_lookup_cycles * total_comps) / (unord_ms.count() / 1000.0);
 
-    std::cout << "4. C++23 std::flat_map vs std::unordered_map LOOKUP THROUGHPUT:\n";
-    std::cout << "   - Components Indexed       : " << total_comps << "\n";
-    std::cout << "   - std::flat_map Time       : " << std::setprecision(2) << flat_ms.count() << " ms ("
-              << std::setprecision(0) << flat_ops_per_sec << " lookups/sec)\n";
-    std::cout << "   - std::unordered_map Time  : " << std::setprecision(2) << unord_ms.count() << " ms ("
-              << std::setprecision(0) << unord_ops_per_sec << " lookups/sec)\n";
-    std::cout << "   - Cache Locality Advantage : std::flat_map contiguous keys & values layout\n\n";
+    std::println("4. C++23 std::flat_map vs std::unordered_map LOOKUP THROUGHPUT:");
+    std::println("   - Components Indexed       : {}", total_comps);
+    std::println("   - std::flat_map Time       : {:.2f} ms ({:.0f} lookups/sec)", flat_ms.count(), flat_ops_per_sec);
+    std::println("   - std::unordered_map Time  : {:.2f} ms ({:.0f} lookups/sec)", unord_ms.count(), unord_ops_per_sec);
+    std::println("   - Cache Locality Advantage : std::flat_map contiguous keys & values layout\n");
 
-    std::cout << "=================================================================\n";
-    std::cout << "      C++26 REAL-TIME ENGINE BENCHMARK COMPLETED SUCCESSFULLY    \n";
-    std::cout << "=================================================================\n";
+    std::println("=================================================================");
+    std::println("      C++26 REAL-TIME ENGINE BENCHMARK COMPLETED SUCCESSFULLY    ");
+    std::println("=================================================================");
 
     return 0;
 }
