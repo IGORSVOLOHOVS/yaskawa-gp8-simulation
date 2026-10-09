@@ -9,8 +9,8 @@
 #include "compressed_logger.hpp"
 #include "atomic_structures.hpp"
 #include "robot_physical_tree.hpp"
+#include "portable_print.hpp"
 #include <fstream>
-#include <iostream>
 #include <cassert>
 #include <cmath>
 #include <execution>
@@ -25,11 +25,11 @@ void test_forward_kinematics() {
     Eigen::Isometry3d T = solver.forwardKinematics(q);
 
     Eigen::Vector3d p = T.translation();
-    std::cout << "[TEST] FK Home Position: X=" << p.x() << " Y=" << p.y() << " Z=" << p.z() << "\n";
+    std::println("[TEST] FK Home Position: X={} Y={} Z={}", p.x(), p.y(), p.z());
     assert(std::abs(p.x() - 0.38) < 1e-3);
     assert(std::abs(p.y() - 0.0) < 1e-3);
     assert(std::abs(p.z() - 0.715) < 1e-3);
-    std::cout << "[PASS] Forward Kinematics Test\n";
+    std::println("[PASS] Forward Kinematics Test");
 }
 
 void test_inverse_kinematics() {
@@ -46,9 +46,9 @@ void test_inverse_kinematics() {
 
     Eigen::Isometry3d T_solved = solver.forwardKinematics(q_solved);
     double error = (target_pose.translation() - T_solved.translation()).norm();
-    std::cout << "[TEST] IK Position Error: " << error << " meters\n";
+    std::println("[TEST] IK Position Error: {} meters", error);
     assert(error < 1e-3);
-    std::cout << "[PASS] Inverse Kinematics Test\n";
+    std::println("[PASS] Inverse Kinematics Test");
 }
 
 void test_coroutine_lazy_trajectory() {
@@ -64,13 +64,13 @@ void test_coroutine_lazy_trajectory() {
         (void)pt;
         point_count++;
     }
-    std::cout << "[TEST] Coroutine Lazy Generator Produced: " << point_count << " trajectory points\n";
+    std::println("[TEST] Coroutine Lazy Generator Produced: {} trajectory points", point_count);
     assert(point_count == 50);
-    std::cout << "[PASS] Coroutine Lazy Trajectory Test\n";
+    std::println("[PASS] Coroutine Lazy Trajectory Test");
 }
 
 void test_lock_free_atomic_structures() {
-    std::cout << "[TEST] Testing Lock-Free Atomic Structures & Memory Orderings...\n";
+    std::println("[TEST] Testing Lock-Free Atomic Structures & Memory Orderings...");
 
     // 1. Lock-Free SPSC Queue
     atomic::LockFreeSPSCQueue<int, 16> spsc_queue;
@@ -136,22 +136,22 @@ void test_lock_free_atomic_structures() {
     counter.incrementSeqCst();
     assert(counter.get() == 3);
 
-    std::cout << "[PASS] Lock-Free Atomic Structures & Memory Orders Test (Is Lock-Free: TRUE)\n";
+    std::println("[PASS] Lock-Free Atomic Structures & Memory Orders Test (Is Lock-Free: TRUE)");
 }
 
 void test_cpp26_reflection() {
-    std::cout << "[TEST] Testing C++26 Static Reflection...\n";
+    std::println("[TEST] Testing C++26 Static Reflection...");
     int joint_count = 0;
     meta::reflect_for_each_joint([&joint_count]<size_t Index>(std::string_view name, auto limit) {
-        std::cout << "  - Joint [" << Index << "]: " << name << " Min=" << limit.min_angle << " Max=" << limit.max_angle << "\n";
+        std::println("  - Joint [{}]: {} Min={} Max={}", Index, name, limit.min_angle, limit.max_angle);
         joint_count++;
     });
     assert(joint_count == DOF);
-    std::cout << "[PASS] C++26 Static Reflection Test\n";
+    std::println("[PASS] C++26 Static Reflection Test");
 }
 
 void test_bitfield_logger() {
-    std::cout << "[TEST] Testing 16-Byte Bit-Field Frame Logger...\n";
+    std::println("[TEST] Testing 16-Byte Bit-Field Frame Logger...");
     BitFieldLogger bit_logger("profiling/test_bit_field.bin");
 
     Eigen::Matrix<double, DOF, 1> q = Eigen::Matrix<double, DOF, 1>::Zero();
@@ -161,11 +161,11 @@ void test_bitfield_logger() {
     }
     assert(bit_logger.getFrameCount() == 100);
     assert(bit_logger.getCompressedSizeBytes() == 1600); // 100 frames * 16 bytes
-    std::cout << "[PASS] 16-Byte Bit-Field Frame Logger Test (EXACTLY 16 BYTES / FRAME)\n";
+    std::println("[PASS] 16-Byte Bit-Field Frame Logger Test (EXACTLY 16 BYTES / FRAME)");
 }
 
 void test_nvidia_stdexec_channel() {
-    std::cout << "[TEST] Testing NVIDIA stdexec Senders/Receivers Channel...\n";
+    std::println("[TEST] Testing NVIDIA stdexec Senders/Receivers Channel...");
     nvidia::stdexec::SenderReceiverChannel<int, 64> channel;
     for (int i = 1; i <= 5; ++i) {
         bool ok = channel.produce(i * 10);
@@ -176,43 +176,43 @@ void test_nvidia_stdexec_channel() {
         assert(val.has_value());
         assert(val.value() == i * 10);
     }
-    std::cout << "[PASS] NVIDIA stdexec Channel Test\n";
+    std::println("[PASS] NVIDIA stdexec Channel Test");
 }
 
 void test_std_execution_policies() {
-    std::cout << "[TEST] Testing C++26 std::execution Parallel Policies...\n";
+    std::println("[TEST] Testing C++26 std::execution Parallel Policies...");
     std::vector<double> v(100000, 1.0);
     std::for_each(std::execution::par_unseq, v.begin(), v.end(), [](double& val) {
         val *= 2.0;
     });
     assert(v[0] == 2.0);
-    std::cout << "[PASS] std::execution Parallel Policies Test\n";
+    std::println("[PASS] std::execution Parallel Policies Test");
 }
 
 void test_physical_component_tree() {
-    std::cout << "[TEST] Testing 1000+ Physical Component Reflection & Tree Integrity...\n";
+    std::println("[TEST] Testing 1000+ Physical Component Reflection & Tree Integrity...");
     auto verify_res = yaskawa::physical::verify_tree_integrity();
     assert(verify_res.has_value());
     size_t count = verify_res.value();
-    std::cout << "  - Total Physical Components Registered: " << count << "\n";
-    std::cout << "  - Status: Tree integrity check passed successfully for " << count << " components.\n";
+    std::println("  - Total Physical Components Registered: {}", count);
+    std::println("  - Status: Tree integrity check passed successfully for {} components.", count);
     assert(count == 1353);
 
     // Test C++23 Expected Monadic component query
     auto comp_res = yaskawa::physical::find_component("root");
     assert(comp_res.has_value());
-    std::cout << "  - Monadic find_component('root') verified: " << (*comp_res)->name << "\n";
+    std::println("  - Monadic find_component('root') verified: {}", (*comp_res)->name);
 
     std::ofstream out("/tmp/cpp_tree_export.json");
     out << yaskawa::physical::export_tree_to_json();
     out.close();
-    std::cout << "[PASS] 1000+ Physical Component Reflection & Tree Integrity Test (Exact 1,353 Parts Verified)\n";
+    std::println("[PASS] 1000+ Physical Component Reflection & Tree Integrity Test (Exact 1,353 Parts Verified)");
 }
 
 int main() {
-    std::cout << "====================================================\n";
-    std::cout << "      RUNNING YASKAWA C++26 UNIT TEST SUITE         \n";
-    std::cout << "====================================================\n";
+    std::println("====================================================");
+    std::println("      RUNNING YASKAWA C++26 UNIT TEST SUITE         ");
+    std::println("====================================================");
 
     test_forward_kinematics();
     test_inverse_kinematics();
@@ -224,8 +224,8 @@ int main() {
     test_std_execution_policies();
     test_physical_component_tree();
 
-    std::cout << "====================================================\n";
-    std::cout << "          ALL UNIT TESTS PASSED SUCCESSFULLY        \n";
-    std::cout << "====================================================\n";
+    std::println("====================================================");
+    std::println("          ALL UNIT TESTS PASSED SUCCESSFULLY        ");
+    std::println("====================================================");
     return 0;
 }
