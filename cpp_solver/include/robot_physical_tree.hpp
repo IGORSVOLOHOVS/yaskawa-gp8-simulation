@@ -1,6 +1,7 @@
 #ifndef ROBOT_PHYSICAL_TREE_HPP
 #define ROBOT_PHYSICAL_TREE_HPP
 
+#include <expected>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -29,14 +30,20 @@ size_t get_total_component_count() noexcept;
 // Access component by index (0 .. count-1)
 const ComponentSpec* get_component_at(size_t index) noexcept;
 
-// Find component by ID
+// Find component by ID (Pointer-based)
 const ComponentSpec* find_component_by_id(const std::string& id) noexcept;
+
+// C++23 Monadic Expected-based Component Lookup
+std::expected<const ComponentSpec*, std::string> find_component(const std::string& id) noexcept;
 
 // Export full tree to JSON string
 std::string export_tree_to_json();
 
 // Export component details to JSON string
 std::string export_component_json(const std::string& id);
+
+// C++23 Monadic Expected-based Verification Routine
+std::expected<size_t, std::string> verify_tree_integrity() noexcept;
 
 // Verification routine verifying all 1000+ components are valid and non-empty
 bool verify_physical_tree_integrity(size_t& verified_count, std::string& error_msg);

@@ -1,23 +1,47 @@
 #include "robot_physical_tree.hpp"
-#include <sstream>
+#include "inplace_vector.hpp"
+#include <array>
+#include <cstddef>
+#include <cstdio>
 #include <algorithm>
-#include <unordered_map>
+#include <expected>
+#include <flat_set>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <utility>
 
 namespace yaskawa::physical {
 
-static const std::vector<ComponentSpec>& get_all_components_internal() {
-    static const std::vector<ComponentSpec> components = []() {
-        std::vector<ComponentSpec> list;
-        list.reserve(1150);
+namespace {
 
-        auto add = [&](const std::string& id, const std::string& name, const std::string& parent_id,
+// NOLINTBEGIN(readability-magic-numbers)
+
+void add_component(inplace_vector<ComponentSpec, 1400>& list,
+                   std::string id, std::string name, std::string parent_id,
+                   int level, int cat_id, std::string cat_name, std::string sub,
+                   std::string mat, std::string mfg, std::string part_no,
+                   std::string specs, std::string tol, double mass) {
+    list.push_back(ComponentSpec{std::move(id), std::move(name), std::move(parent_id),
+                                 level, cat_id, std::move(cat_name), std::move(sub),
+                                 std::move(mat), std::move(mfg), std::move(part_no),
+                                 std::move(specs), std::move(tol), mass});
+}
+
+std::string pad3(int n) {
+    std::array<char, 8> buf{};
+    std::snprintf(buf.data(), buf.size(), "%03d", n);
+    return std::string(buf.data());
+}
+void populate_section_1(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
                        int level, int cat_id, const std::string& cat_name, const std::string& sub,
                        const std::string& mat, const std::string& mfg, const std::string& part_no,
                        const std::string& specs, const std::string& tol, double mass) {
-            list.push_back(ComponentSpec{id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass});
-        };
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Root System
+    // Root System
         add("root", "Yaskawa Motoman GP8 & YRC1000 System", "", 1, 0, "System Root", "Robot & Controller Workcell",
             "Mixed Assemblies", "Yaskawa Electric Corp.", "GP8-YRC1000-SYS", "6-Axis Industrial Manipulator & Controller Workcell", "ISO 9283 Class 1", 77.0);
 
@@ -27,17 +51,17 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("sec_1_casting", "Base Frame Main Casting", "sec_1", 3, 1, "Base & S-Axis", "Structural Castings",
             "Aluminum Die Casting ADC12 (A380 equivalent)", "Yaskawa Foundry", "GP8-CAST-001", "Precision CNC machined base frame with mounting bolt circle", "Ra 1.6 um, Flatness 0.02 mm", 6.8);
         
-        for (int i = 1; i <= 4; ++i) {
+        for (int i : std::views::iota(1, 4 + 1)) {
             add("base_anchor_bolt_" + std::to_string(i), "Base Anchor Bolt M12x45 #" + std::to_string(i), "sec_1_casting", 4, 1, "Base & S-Axis", "Fasteners",
                 "High Tensile Alloy Steel Class 12.9", "Unbrako / Bossard", "DIN912-M12x45-" + std::to_string(i), "Hexagon socket head cap screw ISO 4762", "Class 6g/6H", 0.08);
         }
 
-        for (int i = 1; i <= 8; ++i) {
+        for (int i : std::views::iota(1, 8 + 1)) {
             add("base_m12_bolt_" + std::to_string(i), "Base Mounting Socket Screw M12x50 #" + std::to_string(i), "sec_1_casting", 4, 1, "Base & S-Axis", "Fasteners",
                 "Alloy Steel Grade 12.9 Zinc Flake", "Bossard", "BN384-M12x50-" + std::to_string(i), "Tensile Strength 1200 MPa, ISO 4762", "Class 6g", 0.09);
         }
 
-        for (int i = 1; i <= 4; ++i) {
+        for (int i : std::views::iota(1, 4 + 1)) {
             add("base_dowel_pin_" + std::to_string(i), "Base Precision Dowel Pin 10x30 #" + std::to_string(i), "sec_1_casting", 4, 1, "Base & S-Axis", "Fasteners",
                 "Hardened Tool Steel SUJ2 (HRC 58-62)", "Misumi", "DPIN-10x30-m6-" + std::to_string(i), "Ground precision locator pin ISO 8734", "m6 tolerance (+0.009/+0.015mm)", 0.02);
         }
@@ -56,7 +80,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("sgmsv_stator_core", "Stator Silicon Steel Core Pack", "sgmsv_stator_frame", 5, 1, "Base & S-Axis", "Motor Magnetics",
             "Silicon Steel M250-35A (0.35mm laminations)", "Nippon Steel", "ST-CORE-120", "12-Slot stator core pack with low eddy-current loss", "Loss < 2.5 W/kg", 1.10);
 
-        for (int i = 1; i <= 12; ++i) {
+        for (int i : std::views::iota(1, 12 + 1)) {
             add("sgmsv_coil_" + std::to_string(i), "Stator Winding Copper Coil Slot #" + std::to_string(i), "sgmsv_stator_core", 5, 1, "Base & S-Axis", "Motor Windings",
                 "Copper Wire Cu-ETP (Class 200 H enamel)", "Elektrisola", "ENAM-CU-0.85-" + std::to_string(i), "Triple-insulated copper wire winding slot", "Class H (180 deg C)", 0.05);
         }
@@ -64,7 +88,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("sgmsv_rotor_shaft", "Rotor Shaft Assembly", "s_axis_motor", 4, 1, "Base & S-Axis", "Motor Shaft",
             "Forged Alloy Steel S45C", "Yaskawa Motor Corp", "SGMSV-SHFT-15", "Precision ground shaft with keyway and splines", "Runout < 0.005mm", 0.65);
 
-        for (int i = 1; i <= 8; ++i) {
+        for (int i : std::views::iota(1, 8 + 1)) {
             add("sgmsv_magnet_" + std::to_string(i), "Neodymium Permanent Magnet Segment #" + std::to_string(i), "sgmsv_rotor_shaft", 5, 1, "Base & S-Axis", "Motor Magnetics",
                 "NdFeB Grade N45SH (High Temp 150C)", "Shin-Etsu Magnetics", "N45SH-ARC-25-" + std::to_string(i), "Surface mounted rare-earth arc magnet segment", "Br 1.35 T, Hcj 20 kOe", 0.03);
         }
@@ -80,7 +104,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("enc_pcb", "Encoder Signal Processor Board FR4", "sgmsv_encoder", 5, 1, "Base & S-Axis", "Electronics",
             "FR4 4-Layer PCB Glass Epoxy", "Tamagawa Electronics", "PCB-TS5690-REV2", "RS-485 Mechatrolink transceiver PCB", "IPC-A-610 Class 3", 0.035);
 
-        for (int i = 1; i <= 10; ++i) {
+        for (int i : std::views::iota(1, 10 + 1)) {
             add("enc_pcb_resistor_" + std::to_string(i), "Encoder Precision SMD Resistor 0603 #" + std::to_string(i), "enc_pcb", 5, 1, "Base & S-Axis", "SMD Components",
                 "Thin Film NiCr", "Vishay", "MCT0603-1K-" + std::to_string(i), "1.00 kOhm 0.1% 25ppm/C SMD resistor", "0603 Package", 0.0001);
         }
@@ -98,7 +122,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("rv50_cyc_disc_b", "Cycloidal Disc B (Phase 180 deg)", "s_axis_reducer", 4, 1, "Base & S-Axis", "Cycloidal Components",
             "Bearing Steel SUJ2 / 40Cr (HRC 62)", "Nabtesco", "RV50-DISC-B", "Epitrochoidal profile disc ground to 0.2um Ra", "Profile accuracy 2.0 um", 0.72);
 
-        for (int i = 1; i <= 20; ++i) {
+        for (int i : std::views::iota(1, 20 + 1)) {
             add("rv50_pin_roller_" + std::to_string(i), "Pin Housing Roller #" + std::to_string(i), "s_axis_reducer", 5, 1, "Base & S-Axis", "Needle Rollers",
                 "High Carbon Chrome Bearing Steel SUJ2", "Tsubaki / NSK", "PIN-ROLL-8x22-" + std::to_string(i), "Precision ground cylindrical pin roller HRC 64", "Grade G2 (0.5 um)", 0.015);
         }
@@ -108,12 +132,12 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("s_axis_oil_seal", "NOK Double Lip Shaft Oil Seal TCV 65x88x12", "sec_1", 4, 1, "Base & S-Axis", "Seals",
             "Fluoroelastomer FKM Rubber + Steel Insert", "NOK Corp", "TCV-658812-FKM", "High pressure double lip grease & oil seal", "Temp -20 to 200C", 0.04);
 
-        for (int i = 1; i <= 16; ++i) {
+        for (int i : std::views::iota(1, 16 + 1)) {
             add("s_axis_flange_bolt_" + std::to_string(i), "S-Axis Main Output Flange Bolt M8x35 #" + std::to_string(i), "sec_1", 4, 1, "Base & S-Axis", "Fasteners",
                 "Alloy Steel Class 12.9 Black Oxide", "Bossard", "DIN912-M8x35-" + std::to_string(i), "High strength socket head cap screw", "Torque 42 Nm", 0.035);
         }
 
-        static const char* base_aux_names[] = {
+        constexpr std::array<const char*, 38> base_aux_names = {
             "Base Frame Precision Adjustment Shim Ring 0.1mm", "Base Frame Precision Adjustment Shim Ring 0.2mm",
             "S-Axis Joint Grease Nipple M6x1 Straight", "S-Axis Joint Grease Nipple M6x1 90-Deg Elbow",
             "Base Internal Cable Harness Guide Bracket", "Base Internal Cable Harness Retaining Clamp #1",
@@ -134,20 +158,23 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "S-Axis Encoder Cable Shield Terminal Clamp", "S-Axis Power Cable Connector Housing Clamp",
             "Base Lifting Eye Bolt Threaded Insert M12 #1", "Base Lifting Eye Bolt Threaded Insert M12 #2"
         };
-        auto pad3 = [](int n) {
-            std::string s = std::to_string(n);
-            while (s.length() < 3) s = "0" + s;
-            return s;
-        };
-
-        for (int idx = 0; idx < 38; ++idx) {
+        
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(38))) {
             std::string id = "sec1_part_" + std::to_string(idx + 114);
             add(id, base_aux_names[idx], "sec_1", 4, 1, "Base & S-Axis", "Hardware & Electrical",
                 "Brass / Stainless Steel SUS304 / SUJ2", "Yaskawa Parts", "GP8-BS-PART-" + pad3(idx + 1),
                 std::string("Precision hardware component: ") + base_aux_names[idx], "Standard ISO", 0.02);
         }
+}
+void populate_section_2(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 2: Lower Arm & Axis 2 (L-Axis) Assembly (140 Parts)
+    // Section 2: Lower Arm & Axis 2 (L-Axis) Assembly (140 Parts)
         add("sec_2", "2. Lower Arm & Axis 2 (L-Axis) Assembly", "root", 2, 2, "L-Axis & Lower Arm", "Lower Arm Assembly",
             "Aluminum Cast Alloy A356-T6 / High Alloy Steel", "Yaskawa Electric", "GP8-ASM-LOWER-ARM", "L-axis swing assembly, RV-80E reducer, 1.0kW motor, balance mechanism", "ISO 2768-mK", 8.8);
         add("l_arm_casting", "Lower Arm Main Structural Casting", "sec_2", 3, 2, "L-Axis & Lower Arm", "Structural Castings",
@@ -159,7 +186,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("l_axis_brake", "L-Axis Electromagnetic Safety Brake 24V", "sec_2", 4, 2, "L-Axis & Lower Arm", "Braking Systems",
             "Friction Composite + Solenoid Steel DT4C", "Miki Pulley / Ogura", "B-24V-15NM", "Spring-applied power-off holding brake 15 Nm", "Response < 20 ms", 0.65);
 
-        static const char* l_arm_names[] = {
+        constexpr std::array<const char*, 64> l_arm_names = {
             "L-Axis Main Cross Roller Bearing Outer Ring", "L-Axis Main Cross Roller Bearing Inner Ring",
             "L-Axis Main Roller Cylindrical Pin #1", "L-Axis Main Roller Cylindrical Pin #2",
             "L-Axis Main Roller Cylindrical Pin #3", "L-Axis Main Roller Cylindrical Pin #4",
@@ -193,18 +220,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Lower Arm FEA Stiffener Rib Plate Left", "Lower Arm FEA Stiffener Rib Plate Right",
             "Lower Arm Pivot Shaft Dowel Pin 12x40 #1", "Lower Arm Pivot Shaft Dowel Pin 12x40 #2"
         };
-        for (int idx = 0; idx < 64; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(64))) {
             std::string id = "l_arm_part_" + std::to_string(idx + 1);
             add(id, l_arm_names[idx], "sec_2", 4, 2, "L-Axis & Lower Arm", "Mechanical & Seals",
                 "SUJ2 Steel / FKM Rubber / Aluminum 6061", "Yaskawa / THK / NOK", "GP8-LA-PART-" + pad3(idx + 1),
                 std::string("Precision component: ") + l_arm_names[idx], "Precision Tol", 0.02);
         }
-        for (int idx = 65; idx <= 135; ++idx) {
+        for (int idx : std::views::iota(65, 135 + 1)) {
             add("l_arm_part_" + std::to_string(idx), "L-Axis Structural Fastener M6x20 #" + std::to_string(idx), "sec_2", 4, 2, "L-Axis & Lower Arm", "Fasteners",
                 "High Tensile Steel 12.9", "Bossard", "DIN912-M6x20-L" + std::to_string(idx), "L-Axis joint assembly bolt #" + std::to_string(idx), "Class 6g", 0.015);
         }
+}
+void populate_section_3(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 3: Upper Arm & Axis 3 (U-Axis) Assembly (130 Parts)
+    // Section 3: Upper Arm & Axis 3 (U-Axis) Assembly (130 Parts)
         add("sec_3", "3. Upper Arm & Axis 3 (U-Axis) Assembly", "root", 2, 3, "U-Axis & Upper Arm", "Upper Arm Assembly",
             "Aluminum Alloy ADC12 / Harmonic CSG-32", "Yaskawa Electric", "GP8-ASM-UPPER-ARM", "U-axis elbow drive, Harmonic Drive CSG-32, 750W motor, pneumatics", "ISO 2768-mK", 5.6);
         add("u_arm_casting", "Upper Arm Structure Casting", "sec_3", 3, 3, "U-Axis & Upper Arm", "Structural Castings",
@@ -218,7 +253,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("csg32_circular_spline", "CSG-32 Circular Spline Ring", "u_axis_harmonic", 4, 3, "U-Axis & Upper Arm", "Harmonic Components",
             "Nitrided Steel 40Cr", "Harmonic Drive Systems", "CSG32-CS", "Rigid internal gear ring with internal teeth", "HRC 60", 0.65);
 
-        static const char* u_arm_names[] = {
+        constexpr std::array<const char*, 44> u_arm_names = {
             "CSG-32 Wave Generator Flexible Ball Bearing Outer Ring", "CSG-32 Wave Generator Flexible Ball Bearing Inner Ring",
             "CSG-32 Wave Generator Precision Steel Ball #1", "CSG-32 Wave Generator Precision Steel Ball #2",
             "CSG-32 Wave Generator Precision Steel Ball #3", "CSG-32 Wave Generator Precision Steel Ball #4",
@@ -242,24 +277,32 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "U-Axis Double Lip Shaft Oil Seal 50x68x9", "U-Axis Internal Precision Shim Washer 0.1mm",
             "U-Axis Internal Precision Shim Washer 0.2mm", "U-Axis Home Position Inductive Sensor Target Flag"
         };
-        for (int idx = 0; idx < 44; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(44))) {
             std::string id = "u_arm_part_" + std::to_string(idx + 1);
             add(id, u_arm_names[idx], "sec_3", 4, 3, "U-Axis & Upper Arm", "Hardware & Fittings",
                 "SUS304 / Brass / SMC Polyurethane", "SMC / Festo / Bossard", "GP8-UA-PART-" + pad3(idx + 1),
                 std::string("Precision component: ") + u_arm_names[idx], "Standard", 0.015);
         }
-        for (int idx = 45; idx <= 124; ++idx) {
+        for (int idx : std::views::iota(45, 124 + 1)) {
             add("u_arm_part_" + std::to_string(idx), "U-Arm Assembly Screw M4x10 #" + std::to_string(idx), "sec_3", 4, 3, "U-Axis & Upper Arm", "Fasteners",
                 "Stainless Steel A2-70", "Bossard", "DIN912-M4x10-U" + std::to_string(idx), "U-Arm structural screw #" + std::to_string(idx), "Class 6g", 0.008);
         }
+}
+void populate_section_4(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 4: Wrist & Axis 4 (R-Axis) Assembly (110 Parts)
+    // Section 4: Wrist & Axis 4 (R-Axis) Assembly (110 Parts)
         add("sec_4", "4. Wrist & Axis 4 (R-Axis) Assembly", "root", 2, 4, "R-Axis & Wrist", "Wrist Roll Drive",
             "Alloy Steel / Harmonic CSG-25", "Yaskawa Electric", "GP8-ASM-WRIST-R", "R-axis wrist roll mechanism, hollow shaft, bevel gear train", "ISO 2768-mK", 3.2);
         add("r_axis_harmonic", "Harmonic Drive CSG-25-100-2UH", "sec_4", 3, 4, "R-Axis & Wrist", "Harmonic Gearsets",
             "Alloy Steel 40CrMoV5-1", "Harmonic Drive Systems", "CSG-25-100-2UH", "Zero-backlash hollow shaft harmonic gearset ratio 100:1", "Rated 87 Nm", 1.40);
 
-        static const char* r_wrist_names[] = {
+        constexpr std::array<const char*, 24> r_wrist_names = {
             "R-Axis Spiral Bevel Drive Pinion Gear 24T", "R-Axis Spiral Bevel Driven Ring Gear 48T",
             "R-Axis Hollow Center Driveshaft SUS420", "R-Axis Hollow Shaft Precision Needle Bearing #1",
             "R-Axis Hollow Shaft Precision Needle Bearing #2", "CSG-25 Wave Generator Elliptical Plug",
@@ -273,24 +316,32 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "R-Wrist Socket Head Cap Screw M4x14 #6", "R-Wrist Alignment Dowel Pin 6x18 #1",
             "R-Wrist Alignment Dowel Pin 6x18 #2", "R-Wrist Internal Harness Conduit Bushing"
         };
-        for (int idx = 0; idx < 24; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
             std::string id = "r_wrist_part_" + std::to_string(idx + 1);
             add(id, r_wrist_names[idx], "sec_4", 4, 4, "R-Axis & Wrist", "Mechanical Components",
                 "Chrome Steel / FKM", "THK / NSK / Bossard", "GP8-R4-PART-" + pad3(idx + 1),
                 std::string("Wrist roll component: ") + r_wrist_names[idx], "Precision", 0.012);
         }
-        for (int idx = 25; idx <= 108; ++idx) {
+        for (int idx : std::views::iota(25, 108 + 1)) {
             add("r_wrist_part_" + std::to_string(idx), "R-Wrist Precision Screw M3x8 #" + std::to_string(idx), "sec_4", 4, 4, "R-Axis & Wrist", "Fasteners",
                 "Alloy Steel Grade 12.9", "Bossard", "BN384-M3x8-R" + std::to_string(idx), "R-Wrist assembly screw #" + std::to_string(idx), "Class 6g", 0.005);
         }
+}
+void populate_section_5(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 5: Wrist & Axis 5 (B-Axis) Assembly (110 Parts)
+    // Section 5: Wrist & Axis 5 (B-Axis) Assembly (110 Parts)
         add("sec_5", "5. Wrist & Axis 5 (B-Axis) Assembly", "root", 2, 5, "B-Axis & Wrist", "Wrist Bend Drive",
             "Aluminum Alloy / Harmonic CSG-20", "Yaskawa Electric", "GP8-ASM-WRIST-B", "B-axis wrist bend mechanism, CSG-20 reducer, cross roller bearing", "ISO 2768-mK", 2.1);
         add("b_axis_harmonic", "Harmonic Drive CSG-20-80-2UH", "sec_5", 3, 5, "B-Axis & Wrist", "Harmonic Gearsets",
             "Alloy Steel", "Harmonic Drive Systems", "CSG-20-80-2UH", "Compact zero-backlash harmonic gearset ratio 80:1", "Rated 44 Nm", 0.85);
 
-        static const char* b_wrist_names[] = {
+        constexpr std::array<const char*, 24> b_wrist_names = {
             "B-Axis Cross Roller Bearing CRB-60 Outer Ring", "B-Axis Cross Roller Bearing CRB-60 Inner Ring",
             "B-Axis Cross Roller Bearing Cylindrical Pin #1", "B-Axis Cross Roller Bearing Cylindrical Pin #2",
             "B-Axis Cross Roller Bearing Cylindrical Pin #3", "B-Axis Cross Roller Bearing Cylindrical Pin #4",
@@ -304,18 +355,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "B-Wrist Socket Head Screw M3x10 #3", "B-Wrist Socket Head Screw M3x10 #4",
             "B-Wrist Socket Head Screw M3x10 #5", "B-Wrist Socket Head Screw M3x10 #6"
         };
-        for (int idx = 0; idx < 24; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
             std::string id = "b_wrist_part_" + std::to_string(idx + 1);
             add(id, b_wrist_names[idx], "sec_5", 4, 5, "B-Axis & Wrist", "Mechanical Components",
                 "SUS304 / SUJ2 Steel", "Harmonic Drive / THK", "GP8-B5-PART-" + pad3(idx + 1),
                 std::string("Wrist bend component: ") + b_wrist_names[idx], "Precision", 0.01);
         }
-        for (int idx = 25; idx <= 108; ++idx) {
+        for (int idx : std::views::iota(25, 108 + 1)) {
             add("b_wrist_part_" + std::to_string(idx), "B-Wrist Housing Fastener M3x6 #" + std::to_string(idx), "sec_5", 4, 5, "B-Axis & Wrist", "Fasteners",
                 "Stainless Steel SUS304", "Bossard", "DIN912-M3x6-B" + std::to_string(idx), "B-Wrist assembly screw #" + std::to_string(idx), "Class 6g", 0.004);
         }
+}
+void populate_section_6(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 6: Tool Flange & Axis 6 (T-Axis) Assembly (90 Parts)
+    // Section 6: Tool Flange & Axis 6 (T-Axis) Assembly (90 Parts)
         add("sec_6", "6. Tool Flange & Axis 6 (T-Axis) Assembly", "root", 2, 6, "T-Axis & Tool Flange", "Tool Interface",
             "Stainless Steel SUS304 / Harmonic CSG-14", "Yaskawa Electric", "GP8-ASM-TOOL-FLANGE", "T-axis tool flange ISO 9409-1-50-4-M6, M12 8-pin connector, CSG-14", "ISO 9409-1", 1.1);
         add("tool_flange_plate", "Output Tool Mounting Flange ISO 9409-1", "sec_6", 3, 6, "T-Axis & Tool Flange", "Flange Hardware",
@@ -325,7 +384,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("tool_m12_connector", "Tool IO Connector M12 8-Pin A-Coded IP67", "sec_6", 3, 6, "T-Axis & Tool Flange", "Electrical Interface",
             "PBT Plastic + Gold Plated Brass Pins", "Binder / Phoenix Contact", "M12-8P-FEMALE-IP67", "Circular M12 8-pole female panel mount connector", "IP67 Rating", 0.035);
 
-        static const char* t_flange_names[] = {
+        constexpr std::array<const char*, 20> t_flange_names = {
             "ISO 9409-1 Tool Mounting Thread M6x1-6H #1", "ISO 9409-1 Tool Mounting Thread M6x1-6H #2",
             "ISO 9409-1 Tool Mounting Thread M6x1-6H #3", "ISO 9409-1 Tool Mounting Thread M6x1-6H #4",
             "ISO 9409-1 Precision Tool Locating Dowel Pin Hole 6mm h6", "T-Wrist Double Lip Shaft Seal 20x32x5",
@@ -337,22 +396,30 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "M12 Connector Gold Plated Pin Contact #8", "M12 Connector Silicone O-Ring Seal IP67",
             "T-Axis Cross Roller Bearing CRB-40 Outer Ring", "T-Axis Cross Roller Bearing CRB-40 Inner Ring"
         };
-        for (int idx = 0; idx < 20; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(20))) {
             std::string id = "t_flange_part_" + std::to_string(idx + 1);
             add(id, t_flange_names[idx], "sec_6", 4, 6, "T-Axis & Tool Flange", "Fasteners & Seals",
                 "SUS304 / FKM / Brass", "Bossard / NOK", "GP8-T6-PART-" + pad3(idx + 1),
                 std::string("Tool flange component: ") + t_flange_names[idx], "Precision", 0.005);
         }
-        for (int idx = 21; idx <= 86; ++idx) {
+        for (int idx : std::views::iota(21, 86 + 1)) {
             add("t_flange_part_" + std::to_string(idx), "T-Flange Assembly Torx Screw M2.5x6 #" + std::to_string(idx), "sec_6", 4, 6, "T-Axis & Tool Flange", "Fasteners",
                 "Stainless Steel SUS304", "Bossard", "BN13577-M2.5x6-" + std::to_string(idx), "Tool flange fastener #" + std::to_string(idx), "Class 6g", 0.002);
         }
+}
+void populate_section_7(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 7: Internal & External Cable Harnesses (80 Parts)
+    // Section 7: Internal & External Cable Harnesses (80 Parts)
         add("sec_7", "7. Internal & External Cable Harnesses (Dress Pack)", "root", 2, 7, "Cable Harnesses", "Wiring & Conduit",
             "Polyurethane PUR / Copper Cu-ETP / Polyamide", "LappKabel / Igus", "GP8-HARNESS-DRESS", "Complete 6-axis internal motor power, encoder & pneumatic lines", "UL / CE", 2.4);
 
-        static const char* harness_names[] = {
+        constexpr std::array<const char*, 24> harness_names = {
             "S-Axis Motor Power Cable PUR Shielded Conductor 4x2.5mm2", "S-Axis Encoder Serial Data Cable Twisted Pair 4x0.2mm2",
             "L-Axis Motor Power Cable PUR Shielded Conductor 4x1.5mm2", "L-Axis Encoder Serial Data Cable Twisted Pair 4x0.2mm2",
             "U-Axis Motor Power Cable PUR Shielded Conductor 4x1.0mm2", "U-Axis Encoder Serial Data Cable Twisted Pair 4x0.2mm2",
@@ -366,18 +433,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Harting Han-3A Heavy Duty Motor Power Base Connector Plug", "Amphenol Military-Spec Circular Encoder Base Connector Bayonet",
             "PE Protective Ground Braid Tinned Copper 16mm2 300mm", "Cable Harness Internal Polyethylene Spiral Wrap Sleeve 10m"
         };
-        for (int idx = 0; idx < 24; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(24))) {
             std::string id = "harness_part_" + std::to_string(idx + 1);
             add(id, harness_names[idx], "sec_7", 3, 7, "Cable Harnesses", "Cable Lines",
                 "High-Flex PUR Jacket / Shielded Copper", "LappKabel / Harting", "GP8-CAB-PART-" + pad3(idx + 1),
                 std::string("Dress pack harness line: ") + harness_names[idx], "Flex > 10M cycles", 0.03);
         }
-        for (int idx = 25; idx <= 79; ++idx) {
+        for (int idx : std::views::iota(25, 79 + 1)) {
             add("harness_part_" + std::to_string(idx), "Internal Cable Harness Tie Wrap Clip #" + std::to_string(idx), "sec_7", 3, 7, "Cable Harnesses", "Cable Clamps",
                 "Polyamide PA66 Weatherproof", "HellermannTyton", "T50R-PA66-" + std::to_string(idx), "Internal wiring harness retainer #" + std::to_string(idx), "UL 94 V-2", 0.003);
         }
+}
+void populate_section_8(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 8: YRC1000 Power & Inverter Electronics Cabinet (120 Parts)
+    // Section 8: YRC1000 Power & Inverter Electronics Cabinet (120 Parts)
         add("sec_8", "8. YRC1000 Power & Inverter Electronics Cabinet", "root", 2, 8, "YRC1000 Power", "Power Electronics",
             "Sheet Steel Rittal IP54 / Semikron IGBT / Aluminum", "Yaskawa Controller Division", "YRC1000-PWR-CAB", "3-Phase 380-480V Inverter drive unit, braking resistor, EMC filter", "CE / UL 1741", 24.5);
         add("yrc_main_breaker", "Main Power Circuit Breaker 3-Phase 30A", "sec_8", 3, 8, "YRC1000 Power", "Power Distribution",
@@ -387,7 +462,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("yrc_igbt_module", "6-Axis Integrated Power Module IPM 600V 50A", "sec_8", 3, 8, "YRC1000 Power", "Inverter Power Stage",
             "DBC Substrate / Silicon IGBT / Copper Heat Sink", "Mitsubishi Electric / Fuji", "IPM-6AXIS-600V50A", "6-axis inverter IPM with integrated gate drivers and over-current protection", "600V 50A", 1.45);
 
-        static const char* yrc_pwr_names[] = {
+        constexpr std::array<const char*, 22> yrc_pwr_names = {
             "Inverter DC Bus Electrolytic Capacitor 450V 1500uF #1", "Inverter DC Bus Electrolytic Capacitor 450V 1500uF #2",
             "Inverter DC Bus Electrolytic Capacitor 450V 1500uF #3", "Inverter DC Bus Electrolytic Capacitor 450V 1500uF #4",
             "LEM Hall Effect Phase Current Transducer 50A #1", "LEM Hall Effect Phase Current Transducer 50A #2",
@@ -400,18 +475,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Copper Heavy Duty Power Busbar W-Phase", "Cabinet Air Intake Filter Mat Dust Guard",
             "YRC1000 Cabinet Door Key Lock Assembly", "YRC1000 Door Rubber Sealing Gasket Strip 2m"
         };
-        for (int idx = 0; idx < 22; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(22))) {
             std::string id = "yrc_pwr_part_" + std::to_string(idx + 1);
             add(id, yrc_pwr_names[idx], "sec_8", 4, 8, "YRC1000 Power", "Electrical & Heat Sinks",
                 "Copper / Nichicon Cap / FR4", "Nichicon / LEM / Omron", "GP8-PWR-PART-" + pad3(idx + 1),
                 std::string("Power component: ") + yrc_pwr_names[idx], "Industrial", 0.15);
         }
-        for (int idx = 23; idx <= 116; ++idx) {
+        for (int idx : std::views::iota(23, 116 + 1)) {
             add("yrc_pwr_part_" + std::to_string(idx), "Power Distribution Rail Terminal Block #" + std::to_string(idx), "sec_8", 4, 8, "YRC1000 Power", "Terminal Blocks",
                 "Polyamide PA66 + Tin Plated Copper", "Phoenix Contact", "UT4-PE-" + std::to_string(idx), "Cabinet DIN-rail terminal block #" + std::to_string(idx), "UL 94 V-0", 0.02);
         }
+}
+void populate_section_9(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 9: YRC1000 Main Logic, Safety & Fieldbus Boards (100 Parts)
+    // Section 9: YRC1000 Main Logic, Safety & Fieldbus Boards (100 Parts)
         add("sec_9", "9. YRC1000 Main Logic, Safety & Fieldbus Boards", "root", 2, 9, "YRC1000 Control", "Control Electronics",
             "FR4 Multilayer PCB / Silicon ICs", "Yaskawa Controller Division", "YRC1000-MAIN-CPU", "NXP T1042 Quad-Core CPU board, Xilinx Artix-7 FPGA, SIL3 Safety board", "IEC 61508 SIL3", 3.1);
         add("yrc_main_cpu_board", "YRC1000 Main Real-Time CPU Board", "sec_9", 3, 9, "YRC1000 Control", "Main Board",
@@ -423,7 +506,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("yrc_safety_board", "Dual-Channel Safety Logic Board (SIL3/PLe)", "sec_9", 3, 9, "YRC1000 Control", "Safety Board",
             "FR4 6-Layer PCB", "Yaskawa Electronics", "JANCD-YSF02-E", "Dual lockstep microcontroller SIL3 / Category 4 PLe safety module", "ISO 13849-1 PLe", 0.38);
 
-        static const char* yrc_ctrl_names[] = {
+        constexpr std::array<const char*, 20> yrc_ctrl_names = {
             "DDR3L SDRAM 1GB Memory IC Chip #1", "DDR3L SDRAM 1GB Memory IC Chip #2",
             "NOR Flash Memory 128MB OS Boot ROM", "NAND Flash Memory 4GB Job Storage",
             "Mechatrolink-III Communication Controller ASIC", "EtherCAT Fieldbus Slave Controller ASIC LAN9252",
@@ -435,18 +518,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Precision Temperature Sensor IC LM75", "FPGA Configuration Flash Memory SPI 64MB",
             "DC-DC Step-Down Voltage Regulator 5V 5A", "DC-DC Step-Down Voltage Regulator 3.3V 3A"
         };
-        for (int idx = 0; idx < 20; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(20))) {
             std::string id = "yrc_ctrl_part_" + std::to_string(idx + 1);
             add(id, yrc_ctrl_names[idx], "sec_9", 4, 9, "YRC1000 Control", "IC & Connectors",
                 "Silicon / FR4 / Gold Plated Pins", "TI / STMicroelectronics / Samtec", "GP8-CTL-PART-" + pad3(idx + 1),
                 std::string("Logic control IC: ") + yrc_ctrl_names[idx], "Industrial Spec", 0.01);
         }
-        for (int idx = 21; idx <= 95; ++idx) {
+        for (int idx : std::views::iota(21, 95 + 1)) {
             add("yrc_ctrl_part_" + std::to_string(idx), "SMD Resistor Network Array 0805 #" + std::to_string(idx), "sec_9", 4, 9, "YRC1000 Control", "SMD Passive",
                 "Thin Film NiCr", "Vishay", "CRA08S-" + std::to_string(idx), "Precision pull-up/down resistor array #" + std::to_string(idx), "0805 Package", 0.001);
         }
+}
+void populate_section_10(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 10: Teach Pendant & Safety Interlocks (70 Parts)
+    // Section 10: Teach Pendant & Safety Interlocks (70 Parts)
         add("sec_10", "10. Teach Pendant & Safety Interlocks", "root", 2, 10, "Teach Pendant", "HMI & Safety",
             "Polycarbonate-ABS Shell / 10.1 in TFT LCD / Gorilla Glass", "Yaskawa / Omron", "JZRCR-YPP01-1", "Yaskawa Smart Pendant 10.1 inch touch terminal with 3-position enabling switch", "IP65", 1.25);
         add("pendant_lcd", "10.1 Inch WXGA Industrial Color TFT LCD", "sec_10", 3, 10, "Teach Pendant", "Display Module",
@@ -456,7 +547,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("pendant_estop_button", "Emergency Stop Mushroom Button IP65", "sec_10", 3, 10, "Teach Pendant", "Safety Switches",
             "Polycarbonate Red Shell + Gold Contacts", "IDEC Corp", "XW1E-BV402M-R", "40mm mushroom head E-Stop button with positive opening action", "ISO 13850", 0.065);
 
-        static const char* pendant_names[] = {
+        constexpr std::array<const char*, 12> pendant_names = {
             "Capacitive Touch Glass Overlay Gorilla Glass 3", "Capacitive Touch Controller ASIC IC",
             "Teach Pendant Main ARM Cortex-A53 Processor", "Teach Pendant DDR3 RAM Memory Chip 512MB",
             "Teach Pendant TPU Shock Absorbing Corner Bumper Left", "Teach Pendant TPU Shock Absorbing Corner Bumper Right",
@@ -464,18 +555,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Teach Pendant Internal Li-Ion Battery Back-up 3.7V", "Teach Pendant Membrane Keypad Mode Switch",
             "Teach Pendant Internal Speaker Beeper 85dB", "Teach Pendant Leather Hand Strap Mount"
         };
-        for (int idx = 0; idx < 12; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(12))) {
             std::string id = "pendant_part_" + std::to_string(idx + 1);
             add(id, pendant_names[idx], "sec_10", 4, 10, "Teach Pendant", "HMI Components",
                 "PC-ABS Plastic / Rubber / Copper", "Yaskawa / Amphenol", "GP8-TP-PART-" + pad3(idx + 1),
                 std::string("Teach pendant component: ") + pendant_names[idx], "IP65 Rating", 0.01);
         }
-        for (int idx = 13; idx <= 66; ++idx) {
+        for (int idx : std::views::iota(13, 66 + 1)) {
             add("pendant_part_" + std::to_string(idx), "Pendant Housing Stainless Screw M2.5x8 #" + std::to_string(idx), "sec_10", 4, 10, "Teach Pendant", "Fasteners",
                 "Stainless Steel SUS304", "Bossard", "BN13577-M2.5x8-P" + std::to_string(idx), "Pendant enclosure screw #" + std::to_string(idx), "Class 6g", 0.002);
         }
+}
+void populate_section_11(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 11: End-Effector Gripper & Tooling Assembly (130 Parts)
+    // Section 11: End-Effector Gripper & Tooling Assembly (130 Parts)
         add("sec_11", "11. End-Effector Parallel Gripper & Tooling Assembly", "root", 2, 11, "End-Effector Gripper", "Gripper Assembly",
             "Aluminum ADC12 / SUS304 Stainless / Silicone", "SMC / Schunk", "GP8-GRIPPER-SYS", "2-Finger parallel pneumatic robot gripper, ISO 9409 coupler, sensors & tooling", "ISO 9409-1", 1.85);
         add("gripper_coupler_plate", "Gripper Robot Flange Adaptor Coupler Plate", "sec_11", 3, 11, "End-Effector Gripper", "Tooling Mount",
@@ -495,7 +594,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("gripper_pad_right", "Right High-Friction Molded Silicone Pad", "gripper_finger_right", 5, 11, "End-Effector Gripper", "Contact Elements",
             "Molded Silicone Rubber 60 Shore A", "Schunk / SMC", "PAD-SIL-R", "High coefficient of friction oil-resistant contact pad", "Temp 180C", 0.012);
 
-        static const char* gripper_part_names[] = {
+        constexpr std::array<const char*, 22> gripper_part_names = {
             "Gripper Linear Roller Bearing Guide Rail Left", "Gripper Linear Roller Bearing Guide Rail Right",
             "Gripper Linear Guide Precision Ball Cage Left", "Gripper Linear Guide Precision Ball Cage Right",
             "Gripper Linear Guide Precision Steel Ball #1", "Gripper Linear Guide Precision Steel Ball #2",
@@ -508,18 +607,26 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Gripper Coupler Mounting Socket Screw M6x20 #1", "Gripper Coupler Mounting Socket Screw M6x20 #2",
             "Gripper Coupler Mounting Socket Screw M6x20 #3", "Gripper Coupler Mounting Socket Screw M6x20 #4"
         };
-        for (int idx = 0; idx < 22; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(22))) {
             std::string id = "gripper_part_" + std::to_string(idx + 1);
             add(id, gripper_part_names[idx], "sec_11", 4, 11, "End-Effector Gripper", "Hardware & Sensors",
                 "SUS304 / Brass / SMC Polyurethane", "SMC / Schunk / Bossard", "GP8-GRP-PART-" + pad3(idx + 1),
                 std::string("Gripper component: ") + gripper_part_names[idx], "Precision", 0.01);
         }
-        for (int idx = 23; idx <= 121; ++idx) {
+        for (int idx : std::views::iota(23, 121 + 1)) {
             add("gripper_part_" + std::to_string(idx), "Gripper Assembly Torx Screw M3x8 #" + std::to_string(idx), "sec_11", 4, 11, "End-Effector Gripper", "Fasteners",
                 "Stainless Steel SUS304", "Bossard", "BN13577-M3x8-G" + std::to_string(idx), "Gripper fastener #" + std::to_string(idx), "Class 6g", 0.003);
         }
+}
+void populate_section_12(inplace_vector<ComponentSpec, 1400>& list) {
+    auto add = [&list](const std::string& id, const std::string& name, const std::string& parent_id,
+                       int level, int cat_id, const std::string& cat_name, const std::string& sub,
+                       const std::string& mat, const std::string& mfg, const std::string& part_no,
+                       const std::string& specs, const std::string& tol, double mass) {
+        add_component(list, id, name, parent_id, level, cat_id, cat_name, sub, mat, mfg, part_no, specs, tol, mass);
+    };
 
-        // Section 12: Workcell Pedestal, Mounting Table & Safety Enclosure Assembly (130 Parts)
+    // Section 12: Workcell Pedestal, Mounting Table & Safety Enclosure Assembly (130 Parts)
         add("sec_12", "12. Workcell Pedestal, Table & Safety Enclosure", "root", 2, 12, "Workcell Environment", "Pedestal & Guarding",
             "Structural Steel S235JR / Aluminum Extrusion 80x80 / Polycarbonate", "Item / Bosch Rexroth", "GP8-WORKCELL-PED", "Heavy-duty 1000mm steel pedestal, safety enclosure & light curtain", "ISO 14120", 85.0);
         add("pedestal_main_column", "Heavy-Duty Steel Pedestal Main Column 1000mm", "sec_12", 3, 12, "Workcell Environment", "Pedestal Frame",
@@ -529,7 +636,7 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
         add("pedestal_base_flange", "Pedestal Heavy-Duty Floor Mounting Base Flange", "pedestal_main_column", 4, 12, "Workcell Environment", "Pedestal Frame",
             "Structural Steel Plate S355JR (30mm Thickness)", "Item Industrietechnik", "PED-BOT-30", "Floor anchor plate with 4x M16 anchor holes", "ISO 2768-mK", 22.0);
 
-        static const char* workcell_part_names[] = {
+        constexpr std::array<const char*, 26> workcell_part_names = {
             "Pedestal M16x120 Heavy-Duty Concrete Anchor Bolt #1", "Pedestal M16x120 Heavy-Duty Concrete Anchor Bolt #2",
             "Pedestal M16x120 Heavy-Duty Concrete Anchor Bolt #3", "Pedestal M16x120 Heavy-Duty Concrete Anchor Bolt #4",
             "Pedestal Heavy-Duty Leveling Foot M16x100 #1", "Pedestal Heavy-Duty Leveling Foot M16x100 #2",
@@ -544,21 +651,79 @@ static const std::vector<ComponentSpec>& get_all_components_internal() {
             "Keyence Safety Light Curtain Transmitter Column 1200mm", "Keyence Safety Light Curtain Receiver Column 1200mm",
             "Workcell Cable Duct PVC 80x60mm Gray 2m", "Workcell Grounding Copper Bus Braid 25mm2 500mm"
         };
-        for (int idx = 0; idx < 26; ++idx) {
+        for (size_t idx : std::views::iota(0uz, static_cast<size_t>(26))) {
             std::string id = "workcell_part_" + std::to_string(idx + 1);
             add(id, workcell_part_names[idx], "sec_12", 4, 12, "Workcell Environment", "Guarding & Hardware",
                 "Steel Grade 10.9 / Aluminum / Polycarbonate", "Bosch Rexroth / Omron / Keyence", "GP8-WC-PART-" + pad3(idx + 1),
                 std::string("Workcell component: ") + workcell_part_names[idx], "ISO 14120", 0.25);
         }
-        for (int idx = 27; idx <= 126; ++idx) {
+        for (int idx : std::views::iota(27, 126 + 1)) {
             add("workcell_part_" + std::to_string(idx), "Workcell Extrusion T-Nut & Bolt Assembly M8x20 #" + std::to_string(idx), "sec_12", 4, 12, "Workcell Environment", "Fasteners",
                 "Galvanized Alloy Steel 8.8", "Item Industrietechnik", "TNUT-M8x20-" + std::to_string(idx), "Workcell frame fastener #" + std::to_string(idx), "Class 6g", 0.02);
         }
+}
+const inplace_vector<ComponentSpec, 1400>& get_all_components_internal() {
+    static const inplace_vector<ComponentSpec, 1400> components = []() {
+        inplace_vector<ComponentSpec, 1400> list;
+        constexpr size_t ESTIMATED_TOTAL_PARTS = 1400;
+        list.reserve(ESTIMATED_TOTAL_PARTS);
+
+        populate_section_1(list);
+        populate_section_2(list);
+        populate_section_3(list);
+        populate_section_4(list);
+        populate_section_5(list);
+        populate_section_6(list);
+        populate_section_7(list);
+        populate_section_8(list);
+        populate_section_9(list);
+        populate_section_10(list);
+        populate_section_11(list);
+        populate_section_12(list);
 
         return list;
     }();
     return components;
 }
+
+// NOLINTEND(readability-magic-numbers)
+
+std::string escape_json(const std::string& sv) {
+    std::string out;
+    constexpr size_t JSON_PADDING = 10;
+    out.reserve(sv.size() + JSON_PADDING);
+    for (char c : sv) {
+        switch (c) {
+            case '"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\b':
+                out += "\\b";
+                break;
+            case '\f':
+                out += "\\f";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                out += c;
+                break;
+        }
+    }
+    return out;
+}
+
+} // namespace
 
 size_t get_total_component_count() noexcept {
     return get_all_components_internal().size();
@@ -574,53 +739,46 @@ const ComponentSpec* get_component_at(size_t index) noexcept {
 
 const ComponentSpec* find_component_by_id(const std::string& id) noexcept {
     const auto& all = get_all_components_internal();
-    for (const auto& item : all) {
-        if (item.id == id) {
-            return &item;
-        }
+    auto it = std::ranges::find_if(all, [&](const auto& item) { return item.id == id; });
+    if (it != all.end()) {
+        return &(*it);
     }
     return nullptr;
 }
 
-static std::string escape_json(const std::string& sv) {
-    std::string out;
-    out.reserve(sv.size() + 10);
-    for (char c : sv) {
-        if (c == '"') out += "\\\"";
-        else if (c == '\\') out += "\\\\";
-        else if (c == '\b') out += "\\b";
-        else if (c == '\f') out += "\\f";
-        else if (c == '\n') out += "\\n";
-        else if (c == '\r') out += "\\r";
-        else if (c == '\t') out += "\\t";
-        else out += c;
+std::expected<const ComponentSpec*, std::string> find_component(const std::string& id) noexcept {
+    const auto* comp = find_component_by_id(id);
+    if (comp != nullptr) {
+        return comp;
     }
-    return out;
+    return std::unexpected("Component with ID '" + id + "' not found");
 }
 
 std::string export_component_json(const std::string& id) {
-    const auto* comp = find_component_by_id(id);
-    if (!comp) {
-        return "{\"status\":\"error\",\"message\":\"Component not found\"}";
-    }
-
-    std::ostringstream ss;
-    ss << "{\n"
-       << "  \"id\": \"" << escape_json(comp->id) << "\",\n"
-       << "  \"name\": \"" << escape_json(comp->name) << "\",\n"
-       << "  \"parent_id\": \"" << escape_json(comp->parent_id) << "\",\n"
-       << "  \"level\": " << comp->level << ",\n"
-       << "  \"system_category_id\": " << comp->system_category_id << ",\n"
-       << "  \"system_name\": \"" << escape_json(comp->system_name) << "\",\n"
-       << "  \"subsystem\": \"" << escape_json(comp->subsystem) << "\",\n"
-       << "  \"material\": \"" << escape_json(comp->material) << "\",\n"
-       << "  \"manufacturer\": \"" << escape_json(comp->manufacturer) << "\",\n"
-       << "  \"part_number\": \"" << escape_json(comp->part_number) << "\",\n"
-       << "  \"specs_summary\": \"" << escape_json(comp->specs_summary) << "\",\n"
-       << "  \"tolerances\": \"" << escape_json(comp->tolerances) << "\",\n"
-       << "  \"mass_kg\": " << comp->mass_kg << "\n"
-       << "}";
-    return ss.str();
+    return find_component(id)
+        .transform([](const ComponentSpec* comp) -> std::string {
+            std::ostringstream ss;
+            ss << "{\n"
+               << "  \"id\": \"" << escape_json(comp->id) << "\",\n"
+               << "  \"name\": \"" << escape_json(comp->name) << "\",\n"
+               << "  \"parent_id\": \"" << escape_json(comp->parent_id) << "\",\n"
+               << "  \"level\": " << comp->level << ",\n"
+               << "  \"system_category_id\": " << comp->system_category_id << ",\n"
+               << "  \"system_name\": \"" << escape_json(comp->system_name) << "\",\n"
+               << "  \"subsystem\": \"" << escape_json(comp->subsystem) << "\",\n"
+               << "  \"material\": \"" << escape_json(comp->material) << "\",\n"
+               << "  \"manufacturer\": \"" << escape_json(comp->manufacturer) << "\",\n"
+               << "  \"part_number\": \"" << escape_json(comp->part_number) << "\",\n"
+               << "  \"specs_summary\": \"" << escape_json(comp->specs_summary) << "\",\n"
+               << "  \"tolerances\": \"" << escape_json(comp->tolerances) << "\",\n"
+               << "  \"mass_kg\": " << comp->mass_kg << "\n"
+               << "}";
+            return ss.str();
+        })
+        .or_else([](const std::string& err) -> std::expected<std::string, std::string> {
+            return "{\"status\":\"error\",\"message\":\"" + err + "\"}";
+        })
+        .value();
 }
 
 std::string export_tree_to_json() {
@@ -631,7 +789,7 @@ std::string export_tree_to_json() {
        << "  \"total_count\": " << all.size() << ",\n"
        << "  \"components\": [\n";
 
-    for (size_t i = 0; i < all.size(); ++i) {
+    for (size_t i : std::views::iota(0uz, all.size())) {
         const auto& item = all[i];
         ss << "    {\n"
            << "      \"id\": \"" << escape_json(item.id) << "\",\n"
@@ -655,42 +813,51 @@ std::string export_tree_to_json() {
     return ss.str();
 }
 
-bool verify_physical_tree_integrity(size_t& verified_count, std::string& error_msg) {
+
+std::expected<size_t, std::string> verify_tree_integrity() noexcept {
     const auto& all = get_all_components_internal();
-    verified_count = all.size();
-    if (verified_count < 1000) {
-        error_msg = "Component count is less than 1000: count = " + std::to_string(verified_count);
-        return false;
+    constexpr size_t MIN_VERIFIED_COUNT = 1000;
+    if (all.size() < MIN_VERIFIED_COUNT) {
+        return std::unexpected("Component count is less than 1000: count = " + std::to_string(all.size()));
     }
 
-    std::unordered_map<std::string, bool> id_map;
-    id_map.reserve(all.size());
+    std::flat_set<std::string> id_map;
 
     for (const auto& comp : all) {
         if (comp.id.empty()) {
-            error_msg = "Found component with empty ID";
-            return false;
+            return std::unexpected("Found component with empty ID");
         }
         if (comp.name.empty()) {
-            error_msg = "Component " + comp.id + " has empty name";
-            return false;
+            return std::unexpected("Component " + comp.id + " has empty name");
         }
-        if (id_map.find(comp.id) != id_map.end()) {
-            error_msg = "Duplicate component ID: " + comp.id;
-            return false;
+        if (id_map.contains(comp.id)) {
+            return std::unexpected("Duplicate component ID: " + comp.id);
         }
-        id_map[comp.id] = true;
+        id_map.insert(comp.id);
     }
 
     for (const auto& comp : all) {
-        if (!comp.parent_id.empty() && id_map.find(comp.parent_id) == id_map.end()) {
-            error_msg = "Component " + comp.id + " references non-existent parent_id: " + comp.parent_id;
-            return false;
+        if (!comp.parent_id.empty() && !id_map.contains(comp.parent_id)) {
+            return std::unexpected("Component " + comp.id + " references non-existent parent_id: " + comp.parent_id);
         }
     }
 
-    error_msg = "Tree integrity check passed successfully for " + std::to_string(verified_count) + " components.";
-    return true;
+    return all.size();
+}
+
+bool verify_physical_tree_integrity(size_t& verified_count, std::string& error_msg) {
+    return verify_tree_integrity()
+        .transform([&](size_t count) {
+            verified_count = count;
+            error_msg = "Tree integrity check passed successfully for " + std::to_string(count) + " components.";
+            return true;
+        })
+        .or_else([&](const std::string& err) -> std::expected<bool, std::string> {
+            verified_count = 0;
+            error_msg = err;
+            return false;
+        })
+        .value();
 }
 
 } // namespace yaskawa::physical

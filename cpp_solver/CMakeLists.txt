@@ -3,6 +3,7 @@ project(yaskawa_cpp_solver LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose build type: Release Debug Profile PGO_Generate PGO_Use" FORCE)
@@ -33,9 +34,25 @@ target_link_libraries(test_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads:
 
 # Profile-Specific Compilation Flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(yaskawa_kinematics PRIVATE -O3 -ffast-math)
-    target_compile_options(benchmark_cpp PRIVATE -O3 -ffast-math)
-    target_compile_options(test_cpp PRIVATE -O3 -ffast-math)
+    set(RELEASE_OPT_FLAGS
+        -O3
+        -march=native
+        -mtune=native
+        -ffast-math
+        -funroll-loops
+        -fomit-frame-pointer
+        -flto=auto
+        -fno-signed-zeros
+        -fno-trapping-math
+        -finline-functions
+        -fstrict-aliasing
+        -DNDEBUG
+    )
+    target_compile_options(yaskawa_kinematics PRIVATE ${RELEASE_OPT_FLAGS})
+    target_compile_options(benchmark_cpp PRIVATE ${RELEASE_OPT_FLAGS})
+    target_compile_options(test_cpp PRIVATE ${RELEASE_OPT_FLAGS})
+    target_link_options(benchmark_cpp PRIVATE -flto=auto)
+    target_link_options(test_cpp PRIVATE -flto=auto)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(yaskawa_kinematics PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(benchmark_cpp PRIVATE -O0 -g -fsanitize=address)

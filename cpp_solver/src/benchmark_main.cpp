@@ -8,6 +8,7 @@
 #include "rt_logger.hpp"
 #include "compressed_logger.hpp"
 #include "atomic_structures.hpp"
+#include "robot_physical_tree.hpp"
 #include <chrono>
 #include <iostream>
 #include <iomanip>
@@ -16,6 +17,8 @@
 #include <random>
 #include <execution>
 #include <algorithm>
+#include <flat_map>
+#include <unordered_map>
 
 using namespace yaskawa;
 
@@ -142,6 +145,59 @@ int main() {
     std::cout << "   - Parallel Wall-Clock Time : " << std::setprecision(2) << ik_wall_ms.count() << " ms\n";
     std::cout << "   - Overall IK Success Rate  : " << std::setprecision(1) << ik_parallel_rate << " %\n";
     std::cout << "   - Parallel Throughput      : " << std::setprecision(0) << ik_parallel_ops_per_sec << " IK solutions / sec\n\n";
+
+    // -------------------------------------------------------------------------
+    // Benchmark 4: C++23 std::flat_map vs std::unordered_map Component Lookup
+    // -------------------------------------------------------------------------
+    size_t total_comps = yaskawa::physical::get_total_component_count();
+    std::flat_map<std::string, const physical::ComponentSpec*> flat_index;
+    std::unordered_map<std::string, const physical::ComponentSpec*> unord_index;
+    unord_index.reserve(total_comps);
+
+    for (size_t i = 0; i < total_comps; ++i) {
+        const auto* comp = yaskawa::physical::get_component_at(i);
+        flat_index[comp->id] = comp;
+        unord_index[comp->id] = comp;
+    }
+
+    const int map_lookup_cycles = 10000;
+    auto flat_start = std::chrono::high_resolution_clock::now();
+    size_t flat_found = 0;
+    for (int cycle = 0; cycle < map_lookup_cycles; ++cycle) {
+        for (size_t i = 0; i < total_comps; ++i) {
+            const auto* comp = yaskawa::physical::get_component_at(i);
+            auto it = flat_index.find(comp->id);
+            if (it != flat_index.end()) {
+                flat_found++;
+            }
+        }
+    }
+    auto flat_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> flat_ms = flat_end - flat_start;
+    double flat_ops_per_sec = (map_lookup_cycles * total_comps) / (flat_ms.count() / 1000.0);
+
+    auto unord_start = std::chrono::high_resolution_clock::now();
+    size_t unord_found = 0;
+    for (int cycle = 0; cycle < map_lookup_cycles; ++cycle) {
+        for (size_t i = 0; i < total_comps; ++i) {
+            const auto* comp = yaskawa::physical::get_component_at(i);
+            auto it = unord_index.find(comp->id);
+            if (it != unord_index.end()) {
+                unord_found++;
+            }
+        }
+    }
+    auto unord_end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> unord_ms = unord_end - unord_start;
+    double unord_ops_per_sec = (map_lookup_cycles * total_comps) / (unord_ms.count() / 1000.0);
+
+    std::cout << "4. C++23 std::flat_map vs std::unordered_map LOOKUP THROUGHPUT:\n";
+    std::cout << "   - Components Indexed       : " << total_comps << "\n";
+    std::cout << "   - std::flat_map Time       : " << std::setprecision(2) << flat_ms.count() << " ms ("
+              << std::setprecision(0) << flat_ops_per_sec << " lookups/sec)\n";
+    std::cout << "   - std::unordered_map Time  : " << std::setprecision(2) << unord_ms.count() << " ms ("
+              << std::setprecision(0) << unord_ops_per_sec << " lookups/sec)\n";
+    std::cout << "   - Cache Locality Advantage : std::flat_map contiguous keys & values layout\n\n";
 
     std::cout << "=================================================================\n";
     std::cout << "      C++26 REAL-TIME ENGINE BENCHMARK COMPLETED SUCCESSFULLY    \n";
