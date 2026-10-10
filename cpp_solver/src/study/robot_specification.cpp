@@ -1,13 +1,11 @@
 #include "study/robot_specification.hpp"
 
-#include "robot_physical_tree.hpp"
 #include "study/gp8_model.hpp"
 #include "yaskawa_kinematics.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
@@ -16,7 +14,6 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -154,107 +151,6 @@ constexpr SpecField kFields[] = {
     out << value;
     return out.str();
 }
-
-// ---------------------------------------------------------------------------
-// The MODELLED component tree, indexed once
-// ---------------------------------------------------------------------------
-
-struct TreeCache {
-    std::size_t total = 0;
-    std::vector<bool> is_leaf;            // by component index
-    std::vector<int> category;            // by component index
-    std::vector<SubsystemMass> subsystems;  // by category id, ascending
-    std::vector<std::string> options;     // "all" then every subsystem name
-    double leaf_mass_kg = 0.0;            // MODELLED, every leaf in the tree
-};
-
-[[nodiscard]] const TreeCache& tree_cache() {
-    static const TreeCache cache = [] {
-        TreeCache out;
-        out.total = physical::get_total_component_count();
-        out.is_leaf.assign(out.total, true);
-        out.category.assign(out.total, 0);
-
-        // Pass 1: who is a parent, which subsystem each node belongs to, and
-        // the shallowest level each subsystem reaches.
-        std::unordered_set<std::string> parents;
-        parents.reserve(out.total);
-        int max_category = 0;
-        std::vector<std::uint8_t> levels(out.total, 0);
-        for (std::size_t i = 0; i < out.total; ++i) {
-            const physical::ComponentPtr component = physical::get_component_at(i);
-            if (component == nullptr) {
-                continue;
-            }
-            if (!component->parent_id.empty()) {
-                parents.insert(component->parent_id);
-            }
-            const int category = static_cast<int>(component->system_category_id);
-            out.category[i] = category;
-            levels[i] = static_cast<std::uint8_t>(component->level);
-            max_category = std::max(max_category, category);
-        }
-
-        out.subsystems.resize(static_cast<std::size_t>(max_category) + 1);
-        for (std::size_t id = 0; id < out.subsystems.size(); ++id) {
-            out.subsystems[id].category_id = static_cast<int>(id);
-        }
-        std::vector<std::uint8_t> min_level(out.subsystems.size(), 255);
-        for (std::size_t i = 0; i < out.total; ++i) {
-            std::uint8_t& lowest = min_level[static_cast<std::size_t>(out.category[i])];
-            lowest = std::min(lowest, levels[i]);
-        }
-
-        // Pass 2: counts, leaf masses, and the mass each subsystem declares for
-        // itself on its own assembly node. The hierarchy puts a mass on
-        // assemblies as well as on leaves, so the two must never be added
-        // together: that would count every parent twice.
-        for (std::size_t i = 0; i < out.total; ++i) {
-            const physical::ComponentPtr component = physical::get_component_at(i);
-            if (component == nullptr) {
-                continue;
-            }
-            const std::size_t id = static_cast<std::size_t>(out.category[i]);
-            SubsystemMass& subsystem = out.subsystems[id];
-            if (subsystem.name.empty()) {
-                subsystem.name = component->system_name;
-            }
-            ++subsystem.component_count;
-            out.is_leaf[i] = (parents.find(component->id) == parents.end());
-            if (out.is_leaf[i]) {
-                ++subsystem.leaf_count;
-                subsystem.leaf_mass_kg += component->mass_kg;
-                out.leaf_mass_kg += component->mass_kg;
-            }
-            if (levels[i] == min_level[id]) {
-                subsystem.declared_assembly_mass_kg += component->mass_kg;
-            }
-        }
-
-        out.options.reserve(out.subsystems.size() + 1);
-        out.options.emplace_back("all");
-        for (const SubsystemMass& subsystem : out.subsystems) {
-            if (!subsystem.name.empty()) {
-                out.options.push_back(subsystem.name);
-            }
-        }
-        return out;
-    }();
-    return cache;
-}
-
-[[nodiscard]] int category_of_option(const std::string& option) {
-    for (const SubsystemMass& subsystem : tree_cache().subsystems) {
-        if (subsystem.name == option) {
-            return subsystem.category_id;
-        }
-    }
-    return -1;  // "all"
-}
-
-// The six moving links of gp8_model.hpp, in the order the tree numbers their
-// subsystems: category 1 is the S-axis assembly, 2 the L-axis, and so on.
-constexpr std::array<int, GP8_DOF> kLinkCategory = {1, 2, 3, 4, 5, 6};
 
 // The joint names as HW1484385 Table 5-1 prints them, mirroring the "name"
 // field of each axis in the committed asset.
@@ -541,199 +437,6 @@ constexpr std::array<const char*, GP8_DOF> kAxisJointNames = {
     return out;
 }
 
-[[nodiscard]] json::Value op_component_tree(const json::Value& args) {
-    const TreeCache& cache = tree_cache();
-    const std::string subsystem = optional_enum(args, "subsystem", "all", subsystem_options());
-    const int depth = optional_int(args, "depth", 3, 1, 5);
-    const int max_rows = optional_int(args, "max_rows", 40, 1, 400);
-    const int wanted_category = category_of_option(subsystem);
-
-    std::vector<std::vector<json::Value>> rows;
-    rows.reserve(static_cast<std::size_t>(max_rows));
-    std::size_t matching = 0;
-    double shown_leaf_mass = 0.0;
-
-    for (std::size_t i = 0; i < cache.total; ++i) {
-        const physical::ComponentPtr component = physical::get_component_at(i);
-        if (component == nullptr) {
-            continue;
-        }
-        if (wanted_category >= 0 && cache.category[i] != wanted_category) {
-            continue;
-        }
-        if (static_cast<int>(component->level) > depth) {
-            continue;
-        }
-        ++matching;
-        if (rows.size() >= static_cast<std::size_t>(max_rows)) {
-            continue;
-        }
-        if (cache.is_leaf[i]) {
-            shown_leaf_mass += component->mass_kg;
-        }
-        rows.push_back({
-            json::Value(component->id),
-            json::Value(component->name),
-            json::Value(static_cast<int>(component->level)),
-            json::Value(component->material),
-            json::Value(component->part_number),
-            json::Value(component->mass_kg),
-            json::Value(static_cast<bool>(cache.is_leaf[i])),
-            json::Value(component->system_name),
-        });
-    }
-
-    std::vector<std::vector<json::Value>> subsystem_rows;
-    subsystem_rows.reserve(cache.subsystems.size());
-    for (const SubsystemMass& entry : cache.subsystems) {
-        if (entry.name.empty()) {
-            continue;
-        }
-        subsystem_rows.push_back({
-            json::Value(entry.name),
-            json::Value(static_cast<int>(entry.component_count)),
-            json::Value(static_cast<int>(entry.leaf_count)),
-            json::Value(entry.declared_assembly_mass_kg),
-            json::Value(entry.leaf_mass_kg),
-        });
-    }
-
-    json::Value out = json::Value::object();
-    out.set("components",
-            json::from_table({"id", "name", "level", "material", "part_number",
-                              "mass_kg_modelled", "is_leaf", "subsystem"},
-                             rows));
-    out.set("subsystem_mass",
-            json::from_table({"subsystem", "components", "leaves",
-                              "declared_assembly_mass_kg_modelled", "leaf_mass_kg_modelled"},
-                             subsystem_rows));
-    out.set("shown", json::Value(static_cast<int>(rows.size())));
-    out.set("matching", json::Value(static_cast<int>(matching)));
-    out.set("total", json::Value(static_cast<int>(cache.total)));
-    out.set("shown_leaf_mass_kg_modelled", json::Value(shown_leaf_mass));
-    out.set("total_leaf_mass_kg_modelled", json::Value(cache.leaf_mass_kg));
-    out.set("provenance", json::Value(std::string(kComponentProvenance)));
-    return out;
-}
-
-[[nodiscard]] json::Value op_mass_reconciliation(const json::Value& args) {
-    const double tolerance = optional_scalar(args, "tolerance_kg", 1.0, 0.0, 20.0);
-    const std::vector<std::string> reference_options = {"DS-699-H", "HW1484385", "gp8_model.hpp"};
-    const std::string reference =
-        optional_enum(args, "published_reference", "DS-699-H", reference_options);
-
-    const TreeCache& cache = tree_cache();
-    const double datasheet_mass = published_value("general.mass");
-    const double manual_mass = published_value("general.mass_manual");
-    double reference_mass = datasheet_mass;
-    std::string reference_label = "DS-699-H page 2, GP8 column";
-    bool reference_is_published = true;
-    if (reference == "HW1484385") {
-        reference_mass = manual_mass;
-        reference_label = "HW1484385 page 4, Table 5-1 Approx. Mass";
-    } else if (reference == "gp8_model.hpp") {
-        reference_mass = GP8_ROBOT_MASS_KG;
-        reference_label = "gp8_model.hpp GP8_ROBOT_MASS_KG (the GP8 datasheet column)";
-        reference_is_published = false;
-    }
-
-    std::vector<std::vector<json::Value>> rows;
-    rows.reserve(GP8_DOF);
-    double tree_link_mass = 0.0;
-    double tree_assembly_mass = 0.0;
-    double header_link_mass = 0.0;
-    double total_discrepancy = 0.0;
-    int disagreements = 0;
-
-    for (std::size_t i = 0; i < GP8_DOF; ++i) {
-        const std::size_t category = static_cast<std::size_t>(kLinkCategory[i]);
-        const SubsystemMass& subsystem = cache.subsystems[category];
-        const double tree_leaf = subsystem.leaf_mass_kg;
-        const double header = GP8_LINKS[i].mass;
-        const double discrepancy = tree_leaf - header;
-        const double relative = (header > 0.0) ? (100.0 * discrepancy / header) : 0.0;
-        tree_link_mass += tree_leaf;
-        tree_assembly_mass += subsystem.declared_assembly_mass_kg;
-        header_link_mass += header;
-        total_discrepancy += discrepancy;
-        const bool agrees = std::abs(discrepancy) <= tolerance;
-        if (!agrees) {
-            ++disagreements;
-        }
-        rows.push_back({
-            json::Value(std::string(GP8_AXIS_NAMES[i])),
-            json::Value(subsystem.name),
-            json::Value(tree_leaf),
-            json::Value(subsystem.declared_assembly_mass_kg),
-            json::Value(header),
-            json::Value(discrepancy),
-            json::Value(relative),
-            json::Value(std::string(agrees ? "within " + fixed(tolerance, 2) + " kg"
-                                           : "off by " + fixed(discrepancy, 3) + " kg")),
-        });
-    }
-
-    std::vector<std::vector<json::Value>> totals;
-    totals.reserve(8);
-    totals.push_back({json::Value(std::string("Six link subsystems, leaf sum of the component "
-                                              "tree")),
-                      json::Value(tree_link_mass), json::Value(std::string("modelled"))});
-    totals.push_back({json::Value(std::string("Six link subsystems, assembly masses the tree "
-                                              "declares")),
-                      json::Value(tree_assembly_mass), json::Value(std::string("modelled"))});
-    totals.push_back({json::Value(std::string("Six moving links, GP8_LINKS in gp8_model.hpp")),
-                      json::Value(header_link_mass), json::Value(std::string("modelled"))});
-    totals.push_back({json::Value(std::string("Whole component tree, leaf sum of all subsystems "
-                                              "including controller, pendant, gripper and "
-                                              "workcell")),
-                      json::Value(cache.leaf_mass_kg), json::Value(std::string("modelled"))});
-    totals.push_back({json::Value(std::string("Robot mass, DS-699-H page 2, GP8 column")),
-                      json::Value(datasheet_mass), json::Value(std::string("published"))});
-    totals.push_back({json::Value(std::string("Robot mass, HW1484385 page 4, Table 5-1")),
-                      json::Value(manual_mass), json::Value(std::string("published"))});
-    totals.push_back({json::Value(std::string("Robot mass, gp8_model.hpp GP8_ROBOT_MASS_KG")),
-                      json::Value(GP8_ROBOT_MASS_KG),
-                      json::Value(std::string("modelled, and it is the GP7 datasheet weight"))});
-    totals.push_back({json::Value(std::string("Reference selected for this run: ") +
-                                  reference_label),
-                      json::Value(reference_mass),
-                      json::Value(std::string(reference_is_published ? "published" : "modelled"))});
-
-    const double tree_vs_reference = tree_link_mass - reference_mass;
-    std::string verdict =
-        "The modelled breakdown and the published total do not agree, and that is the point of "
-        "this table: the six link subsystems of the component tree add up to " +
-        fixed(tree_link_mass, 2) + " kg over their leaves, GP8_LINKS in gp8_model.hpp adds up to " +
-        fixed(header_link_mass, 2) + " kg, and the published robot mass is " +
-        fixed(reference_mass, 2) + " kg (" + reference_label + "). The tree's link leaves are " +
-        fixed(tree_vs_reference, 2) + " kg away from that published total";
-    if (reference == "DS-699-H") {
-        verdict += ", and the published total itself is disputed: DS-699-H page 2 says " +
-                   fixed(datasheet_mass, 0) + " kg for the GP8 while HW1484385 page 4 says " +
-                   fixed(manual_mass, 0) + " kg, and gp8_model.hpp uses " +
-                   fixed(GP8_ROBOT_MASS_KG, 0) + " kg, the GP8 column, which the geometry-derived link masses are fitted to";
-    }
-    verdict += ". Per-link, " + std::to_string(disagreements) + " of 6 subsystems differ from " +
-               "gp8_model.hpp by more than " + fixed(tolerance, 2) + " kg.";
-
-    json::Value out = json::Value::object();
-    out.set("links", json::from_table({"axis", "subsystem", "tree_leaf_mass_kg_modelled",
-                                       "tree_assembly_mass_kg_modelled", "gp8_model_mass_kg",
-                                       "discrepancy_kg", "relative_percent", "verdict"},
-                                      rows));
-    out.set("totals", json::from_table({"quantity", "mass_kg", "kind"}, totals));
-    out.set("tree_link_mass_kg_modelled", json::Value(tree_link_mass));
-    out.set("header_link_mass_kg_modelled", json::Value(header_link_mass));
-    out.set("total_discrepancy_kg", json::Value(total_discrepancy));
-    out.set("published_reference_kg", json::Value(reference_mass));
-    out.set("tree_vs_published_kg", json::Value(tree_vs_reference));
-    out.set("link_disagreements", json::Value(disagreements));
-    out.set("agrees", json::Value(disagreements == 0));
-    out.set("verdict", json::Value(verdict));
-    out.set("provenance", json::Value(std::string(kComponentProvenance)));
-    return out;
-}
-
 }  // namespace
 
 // ---------------------------------------------------------------------------
@@ -868,14 +571,6 @@ WristAssessment evaluate_wrist(double payload_mass_kg, const Eigen::Vector3d& of
 }
 
 // ---------------------------------------------------------------------------
-// MODELLED component tree
-// ---------------------------------------------------------------------------
-
-const std::vector<SubsystemMass>& subsystem_masses() { return tree_cache().subsystems; }
-
-const std::vector<std::string>& subsystem_options() { return tree_cache().options; }
-
-// ---------------------------------------------------------------------------
 // The committed asset
 // ---------------------------------------------------------------------------
 
@@ -932,7 +627,7 @@ json::Value load_asset() { return load_asset(find_asset_path()); }
 ModuleDescription RobotSpecificationModule::describe() const {
     ModuleDescription d;
     d.name = "robot_specification";
-    d.title = "Published Specification and Modelled Part Breakdown of the GP8";
+    d.title = "Published Specification of the GP8";
     d.course = CourseRef{3883, "M-407-01", "Robotics Modelling"};
     d.topics = {
         "Block 6 · Model validation against engineering specifications",
@@ -941,8 +636,8 @@ ModuleDescription RobotSpecificationModule::describe() const {
     d.source = "cpp_solver/include/study/robot_specification.hpp";
     d.summary =
         "Shows what Yaskawa actually publishes about the GP8 - every number cited to a document "
-        "and a page - next to what the engine and the project's own modelled part breakdown "
-        "claim, and prints each disagreement instead of hiding it.";
+        "and a page - next to what the engine actually uses, and prints each disagreement "
+        "instead of hiding it.";
 
     {
         OpSpec op;
@@ -1063,93 +758,6 @@ ModuleDescription RobotSpecificationModule::describe() const {
         d.ops.push_back(std::move(op));
     }
 
-    {
-        OpSpec op;
-        op.name = "component_tree";
-        op.title = "Browse the modelled component breakdown";
-        op.formula = "m_{\\text{subsystem}} = \\sum_{c \\in \\text{leaves}} m_c";
-        op.explain =
-            "This component data is a MODELLED breakdown, not Yaskawa data: the part numbers, "
-            "materials and masses in cpp_solver/include/robot_physical_tree.tpp were authored for "
-            "this project and no vendor parts list was used, so nothing in this panel should be "
-            "quoted as a Yaskawa figure. With that said, it is a useful object: a five-level "
-            "hierarchy of a GP8 workcell from the system root down to individual SMD resistors, "
-            "grouped into thirteen subsystems. Pick a subsystem and a depth to browse it. Note "
-            "that the hierarchy declares a mass on its assemblies as well as on its leaves, so "
-            "the subsystem totals add up the leaves only - adding every node would count every "
-            "parent twice - and the assembly mass the tree declares for itself is shown beside it "
-            "so the two can be compared. Every mass in every output of this op is modelled, never "
-            "published.";
-        op.params = {
-            ParamSpec::enumeration("subsystem", "Subsystem", specification::subsystem_options(),
-                                   "all"),
-            ParamSpec::integer("depth", "Deepest level to show (1 system .. 5 micro-part)", "", 1,
-                               5, 3),
-            ParamSpec::integer("max_rows", "Rows to return", "", 1, 400, 40),
-        };
-        op.outputs = {
-            OutputSpec::make("components", "table",
-                             "id, name, level, material, part number and MODELLED mass"),
-            OutputSpec::make("subsystem_mass", "table",
-                             "Per-subsystem component count and MODELLED mass totals"),
-            OutputSpec::make("shown", "int", "Components in the table"),
-            OutputSpec::make("matching", "int", "Components matching the filter"),
-            OutputSpec::make("total", "int", "Components in the whole tree"),
-            OutputSpec::make("shown_leaf_mass_kg_modelled", "scalar",
-                             "MODELLED mass of the shown leaves", "kg"),
-            OutputSpec::make("total_leaf_mass_kg_modelled", "scalar",
-                             "MODELLED mass of every leaf in the tree", "kg"),
-            OutputSpec::make("provenance", "text",
-                             "That this breakdown is modelled, not vendor data"),
-        };
-        d.ops.push_back(std::move(op));
-    }
-
-    {
-        OpSpec op;
-        op.name = "mass_reconciliation";
-        op.title = "Modelled part masses against the published robot mass";
-        op.formula =
-            "\\delta_i = m_i^{\\text{tree}} - m_i^{\\text{model}},\\qquad "
-            "\\Delta = \\sum_i \\delta_i";
-        op.explain =
-            "Two invented mass breakdowns and one published total, in one table, so the "
-            "disagreement is visible rather than buried. Per link it compares the leaf mass of "
-            "that axis' subsystem in the modelled component tree against GP8_LINKS in "
-            "gp8_model.hpp, and sums the per-link differences into one total. Then it puts both "
-            "modelled totals next to the published robot mass - and the published mass is itself "
-            "disputed: DS-699-H page 2 prints 32 kg for the GP8 and 34 kg for the GP7 in the "
-            "adjacent column, while HW1484385 page 4 prints 35 kg. gp8_model.hpp is fitted to the "
-            "32 kg GP8 column. Nothing here is reconciled by adjusting a number; the op "
-            "reports the gap.";
-        op.params = {
-            ParamSpec::scalar("tolerance_kg", "Per-link agreement tolerance", "kg", 0.0, 20.0,
-                              1.0),
-            ParamSpec::enumeration("published_reference", "Published total to compare against",
-                                   {"DS-699-H", "HW1484385", "gp8_model.hpp"}, "DS-699-H"),
-        };
-        op.outputs = {
-            OutputSpec::make("links", "table",
-                             "Per-link MODELLED tree mass, gp8_model.hpp mass and discrepancy"),
-            OutputSpec::make("totals", "table", "Every total, each labelled modelled or published"),
-            OutputSpec::make("tree_link_mass_kg_modelled", "scalar",
-                             "Leaf mass of the six link subsystems", "kg"),
-            OutputSpec::make("header_link_mass_kg_modelled", "scalar",
-                             "Sum of GP8_LINKS masses", "kg"),
-            OutputSpec::make("total_discrepancy_kg", "scalar",
-                             "Sum of the per-link discrepancies", "kg"),
-            OutputSpec::make("published_reference_kg", "scalar", "The published total used", "kg"),
-            OutputSpec::make("tree_vs_published_kg", "scalar",
-                             "Tree link mass minus that published total", "kg"),
-            OutputSpec::make("link_disagreements", "int", "Links outside the tolerance"),
-            OutputSpec::make("agrees", "bool", "Every link within the tolerance"),
-            OutputSpec::make("verdict", "text", "What the gap means"),
-            OutputSpec::make("provenance", "text",
-                             "That the breakdown is modelled, not vendor data"),
-        };
-        d.ops.push_back(std::move(op));
-    }
-
     return d;
 }
 
@@ -1162,12 +770,6 @@ json::Value RobotSpecificationModule::invoke(std::string_view op, const json::Va
     }
     if (op == "wrist_capacity") {
         return specification::op_wrist_capacity(args);
-    }
-    if (op == "component_tree") {
-        return specification::op_component_tree(args);
-    }
-    if (op == "mass_reconciliation") {
-        return specification::op_mass_reconciliation(args);
     }
     unknown_op(name(), op);
 }

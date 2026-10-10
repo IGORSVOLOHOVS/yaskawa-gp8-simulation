@@ -6,8 +6,8 @@
 // Feedback Systems" (M-408-01) for the actuator and wrist load limits.
 //
 // What this module is for: making the *published* GP8 specification visible
-// next to what the engine actually does with it, and keeping the two kinds of
-// number apart.
+// next to what the engine actually does with it, so a published number and an
+// engine constant are never confused for one another.
 //
 //   PUBLISHED  Every value in `published_fields()` was read off a Yaskawa
 //              document and carries that document's id and the page it was
@@ -15,12 +15,6 @@
 //              committed as assets/gp8_published_specification.json;
 //              test_study_specification.cpp asserts the two agree field by
 //              field, so the asset cannot drift away from the code.
-//   MODELLED   The component breakdown in robot_physical_tree.hpp is NOT
-//              Yaskawa data. Its part numbers, materials and masses were
-//              authored for this project. Everything this module reports out
-//              of that tree is labelled "modelled", and `component_tree`
-//              returns the provenance as a text output so a panel cannot
-//              imply a part number came from a vendor document.
 //
 // The two documents, both fetched and read in full:
 //   DS-699-H    "GP7 and GP8 Robots", Yaskawa America datasheet, 2019-05, 2 pp.
@@ -38,7 +32,6 @@
 #include <Eigen/Dense>
 
 #include <array>
-#include <cstddef>
 #include <span>
 #include <string>
 #include <string_view>
@@ -150,36 +143,6 @@ struct WristAssessment {
                                              const Eigen::Vector3d& offset_m,
                                              double payload_inertia_kgm2,
                                              double b_angle_rad);
-
-// ---------------------------------------------------------------------------
-// The MODELLED component breakdown of robot_physical_tree.hpp
-// ---------------------------------------------------------------------------
-
-// One sentence, reused by every op that reports a mass out of the tree.
-inline constexpr const char* kComponentProvenance =
-    "MODELLED, not Yaskawa data: the component hierarchy, its part numbers, materials and masses "
-    "in cpp_solver/include/robot_physical_tree.tpp were authored for this project as a plausible "
-    "breakdown of a GP8 workcell. They are not taken from any vendor document, no Yaskawa parts "
-    "list was used, and no mass below is a published or measured figure. Only the totals this "
-    "module compares them against (robot mass, payload, axis ratings) are published; they are "
-    "cited by document and page in assets/gp8_published_specification.json.";
-
-struct SubsystemMass {
-    int category_id = 0;
-    std::string name;
-    std::size_t component_count = 0;        // every node of the subsystem
-    std::size_t leaf_count = 0;             // nodes with no child
-    double declared_assembly_mass_kg = 0.0; // MODELLED, the subsystem node's own mass
-    double leaf_mass_kg = 0.0;              // MODELLED, sum over leaves only
-};
-
-// Indexed by category id, in id order. The hierarchy declares a mass on its
-// assemblies as well as on its leaves, so only the leaf sum may be added up:
-// summing every node double-counts the parents.
-[[nodiscard]] const std::vector<SubsystemMass>& subsystem_masses();
-
-// "all" followed by every subsystem name, for the component_tree enum.
-[[nodiscard]] const std::vector<std::string>& subsystem_options();
 
 // ---------------------------------------------------------------------------
 // The committed asset, found relative to the repository root

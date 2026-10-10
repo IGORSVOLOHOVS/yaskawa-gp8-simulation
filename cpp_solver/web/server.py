@@ -82,13 +82,6 @@ class RobotHandler(http.server.SimpleHTTPRequestHandler):
         TEST_BIN = os.path.join(WEB_DIR, '..', 'build', 'test_cpp')
         if parsed_path.path == '/api/benchmark':
             self.run_benchmark_api()
-        elif parsed_path.path == '/api/robot/tree':
-            self.run_robot_tree_api(TEST_BIN)
-        elif parsed_path.path.startswith('/api/robot/part/'):
-            part_id = parsed_path.path[len('/api/robot/part/'):]
-            self.run_robot_part_api(TEST_BIN, part_id)
-        elif parsed_path.path == '/api/robot/spatial_manifest':
-            self.run_spatial_manifest_api()
         elif parsed_path.path == '/api/robot/verify':
             self.run_robot_verify_api(TEST_BIN)
         elif parsed_path.path.startswith('/meshes/'):
@@ -127,49 +120,6 @@ class RobotHandler(http.server.SimpleHTTPRequestHandler):
 
         self.wfile.write(json.dumps(response).encode('utf-8'))
 
-    def run_robot_tree_api(self, test_bin):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        try:
-            from tree_database import get_robot_physical_tree
-            tree = get_robot_physical_tree()
-            response = {"status": "success", "total_count": len(tree), "components": tree}
-        except Exception as e:
-            response = {"status": "error", "message": str(e)}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-
-    def run_robot_part_api(self, test_bin, part_id):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        try:
-            from tree_database import get_robot_physical_tree
-            tree = get_robot_physical_tree()
-            part = next((item for item in tree if item["id"] == part_id), None)
-            if part:
-                response = {"status": "success", "component": part}
-            else:
-                response = {"status": "error", "message": f"Part ID {part_id} not found"}
-        except Exception as e:
-            response = {"status": "error", "message": str(e)}
-        self.wfile.write(json.dumps(response).encode('utf-8'))
-
-    def run_spatial_manifest_api(self):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        manifest_path = os.path.join(WEB_DIR, 'spatial_manifest.json')
-        if os.path.exists(manifest_path):
-            with open(manifest_path, 'rb') as f:
-                self.wfile.write(f.read())
-        else:
-            response = {"status": "error", "message": "Spatial manifest file not found"}
-            self.wfile.write(json.dumps(response).encode('utf-8'))
-
     def run_robot_verify_api(self, test_bin):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
@@ -181,13 +131,9 @@ class RobotHandler(http.server.SimpleHTTPRequestHandler):
         else:
             try:
                 res = subprocess.run([test_bin], capture_output=True, text=True, timeout=15)
-                from tree_database import get_robot_physical_tree
-                py_tree = get_robot_physical_tree()
                 response = {
                     "status": "success",
                     "cpp_test_passed": ("ALL UNIT TESTS PASSED SUCCESSFULLY" in res.stdout),
-                    "cpp_components_verified": 1101,
-                    "python_components_verified": len(py_tree),
                     "output": res.stdout
                 }
             except Exception as e:

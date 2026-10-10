@@ -8,7 +8,7 @@
 #include "rt_logger.hpp"
 #include "compressed_logger.hpp"
 #include "atomic_structures.hpp"
-#include "robot_physical_tree.hpp"
+#include "study/module_registry.hpp"
 #include "portable_print.hpp"
 #include <chrono>
 #include <vector>
@@ -17,6 +17,7 @@
 #include <execution>
 #include <algorithm>
 #include <ranges>
+#include <string>
 #include <unordered_map>
 
 #if __has_include(<flat_map>)
@@ -154,63 +155,92 @@ int main() {
     std::println("   - Parallel Throughput      : {:.0f} IK solutions / sec\n", ik_parallel_ops_per_sec);
 
     // -------------------------------------------------------------------------
-    // Benchmark 4: C++23 std::flat_map vs std::unordered_map Component Lookup
+    // Benchmark 4: C++23 std::flat_map vs std::map vs std::unordered_map
+    //
+    // The key set is the study module catalogue itself: every "module.op" name
+    // that build_default_registry() publishes through describe_all(), which is
+    // exactly what `study_api --describe` returns and what the Study Console
+    // dispatches on. These are strings the project really looks up, so the
+    // comparison measures container layout on the engine's own data.
     // -------------------------------------------------------------------------
-    size_t total_comps = yaskawa::physical::get_total_component_count();
-#if HAS_FLAT_MAP
-    std::flat_map<std::string, physical::ComponentPtr> map_index;
-#else
-    std::map<std::string, physical::ComponentPtr> map_index;
-#endif
-    std::unordered_map<std::string, physical::ComponentPtr> unord_index;
-    unord_index.reserve(total_comps);
-
-    for (size_t i : std::views::iota(size_t{0}, total_comps)) {
-        auto comp = yaskawa::physical::get_component_at(i);
-        map_index[comp->id] = comp;
-        unord_index[comp->id] = comp;
+    std::vector<std::string> op_keys;
+    std::size_t module_count = 0;
+    {
+        const study::ModuleRegistry registry = study::build_default_registry();
+        const study::json::Value catalogue = registry.describe_all();
+        const study::json::Value& modules = catalogue["modules"];
+        module_count = modules.size();
+        for (std::size_t m : std::views::iota(std::size_t{0}, modules.size())) {
+            const study::json::Value& module = modules[m];
+            const std::string& module_name = module["name"].as_string();
+            const study::json::Value& ops = module["ops"];
+            for (std::size_t o : std::views::iota(std::size_t{0}, ops.size())) {
+                op_keys.push_back(module_name + "." + ops[o]["name"].as_string());
+            }
+        }
     }
 
-    const int map_lookup_cycles = 10000;
+    const std::size_t total_keys = op_keys.size();
+#if HAS_FLAT_MAP
+    std::flat_map<std::string, std::size_t> map_index;
+#else
+    std::map<std::string, std::size_t> map_index;
+#endif
+    std::unordered_map<std::string, std::size_t> unord_index;
+    unord_index.reserve(total_keys);
+
+    for (std::size_t i : std::views::iota(std::size_t{0}, total_keys)) {
+        map_index[op_keys[i]] = i;
+        unord_index[op_keys[i]] = i;
+    }
+
+    const int map_lookup_cycles = 100000;
     auto map_start = std::chrono::high_resolution_clock::now();
-    size_t map_found = 0;
+    std::size_t map_found = 0;
     for (int cycle : std::views::iota(0, map_lookup_cycles)) {
-        for (size_t i : std::views::iota(size_t{0}, total_comps)) {
-            auto comp = yaskawa::physical::get_component_at(i);
-            auto it = map_index.find(comp->id);
+        (void)cycle;
+        for (std::size_t i : std::views::iota(std::size_t{0}, total_keys)) {
+            auto it = map_index.find(op_keys[i]);
             if (it != map_index.end()) {
-                map_found++;
+                map_found += it->second;
             }
         }
     }
     auto map_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> map_ms = map_end - map_start;
-    double map_ops_per_sec = (map_lookup_cycles * total_comps) / (map_ms.count() / 1000.0);
+    double map_ops_per_sec = (map_lookup_cycles * total_keys) / (map_ms.count() / 1000.0);
 
     auto unord_start = std::chrono::high_resolution_clock::now();
-    size_t unord_found = 0;
+    std::size_t unord_found = 0;
     for (int cycle : std::views::iota(0, map_lookup_cycles)) {
-        for (size_t i : std::views::iota(size_t{0}, total_comps)) {
-            auto comp = yaskawa::physical::get_component_at(i);
-            auto it = unord_index.find(comp->id);
+        (void)cycle;
+        for (std::size_t i : std::views::iota(std::size_t{0}, total_keys)) {
+            auto it = unord_index.find(op_keys[i]);
             if (it != unord_index.end()) {
-                unord_found++;
+                unord_found += it->second;
             }
         }
     }
     auto unord_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> unord_ms = unord_end - unord_start;
-    double unord_ops_per_sec = (map_lookup_cycles * total_comps) / (unord_ms.count() / 1000.0);
+    double unord_ops_per_sec = (map_lookup_cycles * total_keys) / (unord_ms.count() / 1000.0);
+
+    if (map_found != unord_found) {
+        std::println("   ! container disagreement: {} vs {}", map_found, unord_found);
+        return 1;
+    }
 
 #if HAS_FLAT_MAP
     std::println("4. C++23 std::flat_map vs std::unordered_map LOOKUP THROUGHPUT:");
-    std::println("   - Components Indexed       : {}", total_comps);
+    std::println("   - Dataset                  : study module catalogue (module.op names)");
+    std::println("   - Modules / Keys Indexed   : {} / {}", module_count, total_keys);
     std::println("   - std::flat_map Time       : {:.2f} ms ({:.0f} lookups/sec)", map_ms.count(), map_ops_per_sec);
     std::println("   - std::unordered_map Time  : {:.2f} ms ({:.0f} lookups/sec)", unord_ms.count(), unord_ops_per_sec);
     std::println("   - Cache Locality Advantage : std::flat_map contiguous keys & values layout\n");
 #else
     std::println("4. Associative std::map vs std::unordered_map LOOKUP THROUGHPUT:");
-    std::println("   - Components Indexed       : {}", total_comps);
+    std::println("   - Dataset                  : study module catalogue (module.op names)");
+    std::println("   - Modules / Keys Indexed   : {} / {}", module_count, total_keys);
     std::println("   - std::map Time            : {:.2f} ms ({:.0f} lookups/sec)", map_ms.count(), map_ops_per_sec);
     std::println("   - std::unordered_map Time  : {:.2f} ms ({:.0f} lookups/sec)", unord_ms.count(), unord_ops_per_sec);
     std::println("   - Container Layout         : std::unordered_map hash buckets vs red-black tree\n");

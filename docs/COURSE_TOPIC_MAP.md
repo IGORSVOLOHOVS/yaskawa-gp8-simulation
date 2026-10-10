@@ -72,8 +72,10 @@ saying so is the point of the column.
 
 `robot_specification` was not in the original roster. It was added once the
 vendor documents were read: the published datasheet figures, the per-axis limits
-the engine actually uses against the ones Yaskawa publishes, the wrist load
-capacity check, and the modelled component tree with its provenance stated.
+the engine actually uses against the ones Yaskawa publishes, and the wrist load
+capacity check. It also carried a browser over a modelled component breakdown
+of the robot; that breakdown was removed from the repository because it was not
+vendor data, so the module now reports published figures only.
 
 Counts are rows in the map of §3, measured from this document; a row whose
 Module.op cell names two modules counts in both, which is why the column does

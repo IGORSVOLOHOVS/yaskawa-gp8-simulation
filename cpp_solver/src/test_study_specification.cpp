@@ -14,9 +14,6 @@
 //     disagreement, not by widening the tolerance until it disappears;
 //   - wrist_capacity accepts a payload inside the rating and rejects one
 //     outside it on each of R, B and T independently;
-//   - component_tree returns its provenance text and internally consistent
-//     counts, and mass_reconciliation's per-link discrepancies sum to the total
-//     it reports;
 //   - every op runs from the defaults it declares and returns every output it
 //     declares.
 
@@ -417,10 +414,9 @@ void test_defaults(const study::RobotSpecificationModule& module) {
     check(description.name == "robot_specification" && description.course.id == 3883 &&
               description.source == "cpp_solver/include/study/robot_specification.hpp",
           "the module describes itself with its name, course 3883 and its header path");
-    check(description.ops.size() == 5 && description.has_op("datasheet") &&
-              description.has_op("axis_limits") && description.has_op("wrist_capacity") &&
-              description.has_op("component_tree") && description.has_op("mass_reconciliation"),
-          "all five ops are declared");
+    check(description.ops.size() == 3 && description.has_op("datasheet") &&
+              description.has_op("axis_limits") && description.has_op("wrist_capacity"),
+          "all three ops are declared");
 
     bool params_complete = true;
     for (const study::OpSpec& op : description.ops) {
@@ -589,168 +585,6 @@ void test_wrist_capacity(const study::RobotSpecificationModule& module) {
           "9 kg is rejected against the published 8 kg rated payload");
 }
 
-void test_component_tree(const study::RobotSpecificationModule& module) {
-    std::cout << "\n--- component_tree ---\n";
-
-    const study::ModuleDescription description = module.describe();
-    const study::OpSpec* tree_op = nullptr;
-    for (const study::OpSpec& op : description.ops) {
-        if (op.name == "component_tree") {
-            tree_op = &op;
-        }
-    }
-    check(tree_op != nullptr, "component_tree is declared");
-    if (tree_op == nullptr) {
-        return;
-    }
-    const std::string first_sentence = tree_op->explain.substr(0, tree_op->explain.find('.') + 1);
-    check(first_sentence.find("MODELLED") != std::string::npos &&
-              first_sentence.find("not Yaskawa data") != std::string::npos,
-          "the first sentence of the explanation says the breakdown is modelled, not Yaskawa data");
-
-    const Value result = module.invoke("component_tree", args_from_defaults(*tree_op));
-    check(result["provenance"].is_string() &&
-              result["provenance"].as_string() == std::string(spec::kComponentProvenance),
-          "component_tree returns the provenance text");
-    check(result["provenance"].as_string().find("not taken from any vendor document") !=
-              std::string::npos,
-          "the provenance text states that no vendor document was used");
-
-    const int shown = static_cast<int>(result["shown"].as_double());
-    const int matching = static_cast<int>(result["matching"].as_double());
-    const int total = static_cast<int>(result["total"].as_double());
-    check(shown == static_cast<int>(result["components"]["rows"].size()),
-          "the reported count of shown components equals the rows returned");
-    check(shown <= matching && matching <= total && total > 0,
-          "shown <= matching <= total (" + std::to_string(shown) + " <= " +
-              std::to_string(matching) + " <= " + std::to_string(total) + ")");
-
-    bool mass_column_labelled = false;
-    const Value& columns = result["components"]["columns"];
-    for (std::size_t i = 0; i < columns.size(); ++i) {
-        if (columns[i].as_string().find("mass") != std::string::npos) {
-            mass_column_labelled = columns[i].as_string().find("modelled") != std::string::npos;
-        }
-    }
-    check(mass_column_labelled, "the component mass column is labelled modelled, not published");
-
-    bool subsystem_masses_labelled = true;
-    const Value& subsystem_columns = result["subsystem_mass"]["columns"];
-    for (std::size_t i = 0; i < subsystem_columns.size(); ++i) {
-        const std::string column = subsystem_columns[i].as_string();
-        if (column.find("mass") != std::string::npos &&
-            column.find("modelled") == std::string::npos) {
-            subsystem_masses_labelled = false;
-        }
-    }
-    check(subsystem_masses_labelled, "every subsystem mass column is labelled modelled");
-
-    std::size_t component_sum = 0;
-    double leaf_mass_sum = 0.0;
-    bool leaves_are_a_subset = true;
-    for (const spec::SubsystemMass& subsystem : spec::subsystem_masses()) {
-        component_sum += subsystem.component_count;
-        leaf_mass_sum += subsystem.leaf_mass_kg;
-        leaves_are_a_subset = leaves_are_a_subset &&
-                              subsystem.leaf_count <= subsystem.component_count &&
-                              subsystem.leaf_mass_kg >= 0.0;
-    }
-    check(leaves_are_a_subset,
-          "in every subsystem the leaves are a subset of its components and carry a non-negative "
-          "modelled mass");
-    check(component_sum == static_cast<std::size_t>(total),
-          "the per-subsystem component counts sum to the whole tree");
-    check_near(leaf_mass_sum, result["total_leaf_mass_kg_modelled"].as_double(), 1.0e-9,
-               "the per-subsystem modelled leaf masses sum to the reported tree total");
-
-    Value one_subsystem = Value::object();
-    one_subsystem.set("subsystem", Value(std::string("R-Axis & Wrist")));
-    one_subsystem.set("depth", Value(5));
-    one_subsystem.set("max_rows", Value(400));
-    const Value wrist = module.invoke("component_tree", one_subsystem);
-    check(static_cast<int>(wrist["matching"].as_double()) ==
-                  static_cast<int>(wrist["shown"].as_double()) &&
-              wrist["shown"].as_double() > 0.0,
-          "at full depth and row budget, every matching component of one subsystem is shown");
-    check(wrist["matching"].as_double() < result["total"].as_double(),
-          "one subsystem holds fewer components than the whole tree");
-}
-
-void test_mass_reconciliation(const study::RobotSpecificationModule& module) {
-    std::cout << "\n--- mass_reconciliation ---\n";
-
-    const Value result = module.invoke("mass_reconciliation", Value::object());
-    const Value& links = result["links"];
-    check(links["rows"].size() == study::GP8_DOF, "one row per moving link");
-
-    const std::size_t discrepancy_column = column_of(links, "discrepancy_kg");
-    const std::size_t tree_column = column_of(links, "tree_leaf_mass_kg_modelled");
-    const std::size_t model_column = column_of(links, "gp8_model_mass_kg");
-    check(discrepancy_column < links["columns"].size() && tree_column < links["columns"].size() &&
-              model_column < links["columns"].size(),
-          "the table carries the modelled tree mass, the gp8_model.hpp mass and the discrepancy");
-
-    double discrepancy_sum = 0.0;
-    double tree_sum = 0.0;
-    double model_sum = 0.0;
-    for (std::size_t i = 0; i < links["rows"].size(); ++i) {
-        const Value& row = links["rows"][i];
-        discrepancy_sum += row[discrepancy_column].as_double();
-        tree_sum += row[tree_column].as_double();
-        model_sum += row[model_column].as_double();
-    }
-    check_near(discrepancy_sum, result["total_discrepancy_kg"].as_double(), 1.0e-9,
-               "the per-link discrepancies sum to the reported total discrepancy");
-    check_near(tree_sum, result["tree_link_mass_kg_modelled"].as_double(), 1.0e-9,
-               "the per-link modelled tree masses sum to the reported tree total");
-    check_near(model_sum, result["header_link_mass_kg_modelled"].as_double(), 1.0e-9,
-               "the per-link gp8_model.hpp masses sum to the reported header total");
-    check_near(model_sum, study::total_moving_mass(), 1.0e-9,
-               "those masses are GP8_LINKS from gp8_model.hpp, not a second copy");
-    check_near(result["total_discrepancy_kg"].as_double(), tree_sum - model_sum, 1.0e-9,
-               "the total discrepancy is the modelled tree total minus the gp8_model.hpp total");
-
-    check_near(result["published_reference_kg"].as_double(), 32.0, 1.0e-12,
-               "the default published reference is the 32 kg of DS-699-H page 2, the GP8 column");
-    check_near(result["tree_vs_published_kg"].as_double(),
-               result["tree_link_mass_kg_modelled"].as_double() -
-                   result["published_reference_kg"].as_double(),
-               1.0e-9,
-               "the gap to the published total is the modelled tree total minus that published "
-               "mass");
-
-    Value manual_args = Value::object();
-    manual_args.set("published_reference", Value(std::string("HW1484385")));
-    const Value against_manual = module.invoke("mass_reconciliation", manual_args);
-    check_near(against_manual["published_reference_kg"].as_double(), 35.0, 1.0e-12,
-               "the reference can be switched to the 35 kg of HW1484385 page 4");
-
-    Value model_args = Value::object();
-    model_args.set("published_reference", Value(std::string("gp8_model.hpp")));
-    const Value against_model = module.invoke("mass_reconciliation", model_args);
-    check_near(against_model["published_reference_kg"].as_double(), study::GP8_ROBOT_MASS_KG,
-               1.0e-12,
-               "the reference can be switched to gp8_model.hpp's own GP8_ROBOT_MASS_KG");
-    check(against_model["totals"]["rows"].size() >= 7,
-          "the totals table labels every number modelled or published");
-
-    bool totals_labelled = true;
-    const std::size_t kind_column = column_of(result["totals"], "kind");
-    for (std::size_t i = 0; i < result["totals"]["rows"].size(); ++i) {
-        const std::string kind = result["totals"]["rows"][i][kind_column].as_string();
-        if (kind.find("modelled") == std::string::npos &&
-            kind.find("published") == std::string::npos) {
-            totals_labelled = false;
-        }
-    }
-    check(totals_labelled, "every total says whether it is modelled or published");
-    check(result["provenance"].as_string() == std::string(spec::kComponentProvenance),
-          "mass_reconciliation repeats the provenance of the breakdown it sums");
-
-    std::cout << "       modelled tree link mass " << tree_sum << " kg, GP8_LINKS " << model_sum
-              << " kg, published 32 kg (DS-699-H p2), 35 kg (HW1484385 p4)\n";
-}
-
 void test_axis_limits_op(const study::RobotSpecificationModule& module) {
     std::cout << "\n--- axis_limits ---\n";
 
@@ -818,8 +652,6 @@ int main() {
     test_datasheet_op(module);
     test_axis_limits_op(module);
     test_wrist_capacity(module);
-    test_component_tree(module);
-    test_mass_reconciliation(module);
 
     std::cout << "====================================================\n";
     std::cout << "checks run: " << g_checks << ", failed: " << g_failures << "\n";

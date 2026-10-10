@@ -8,9 +8,7 @@
 #include "rt_logger.hpp"
 #include "compressed_logger.hpp"
 #include "atomic_structures.hpp"
-#include "robot_physical_tree.hpp"
 #include "portable_print.hpp"
-#include <fstream>
 #include <cassert>
 #include <cmath>
 #include <execution>
@@ -189,26 +187,6 @@ void test_std_execution_policies() {
     std::println("[PASS] std::execution Parallel Policies Test");
 }
 
-void test_physical_component_tree() {
-    std::println("[TEST] Testing 1000+ Physical Component Reflection & Tree Integrity...");
-    auto verify_res = yaskawa::physical::verify_tree_integrity();
-    assert(verify_res.has_value());
-    size_t count = verify_res.value();
-    std::println("  - Total Physical Components Registered: {}", count);
-    std::println("  - Status: Tree integrity check passed successfully for {} components.", count);
-    assert(count == 1353);
-
-    // Test C++23 Expected Monadic component query
-    auto comp_res = yaskawa::physical::find_component("root");
-    assert(comp_res.has_value());
-    std::println("  - Monadic find_component('root') verified: {}", (*comp_res)->name);
-
-    std::ofstream out("/tmp/cpp_tree_export.json");
-    out << yaskawa::physical::export_tree_to_json();
-    out.close();
-    std::println("[PASS] 1000+ Physical Component Reflection & Tree Integrity Test (Exact 1,353 Parts Verified)");
-}
-
 int main() {
     std::println("====================================================");
     std::println("      RUNNING YASKAWA C++26 UNIT TEST SUITE         ");
@@ -222,7 +200,6 @@ int main() {
     test_bitfield_logger();
     test_nvidia_stdexec_channel();
     test_std_execution_policies();
-    test_physical_component_tree();
 
     std::println("====================================================");
     std::println("          ALL UNIT TESTS PASSED SUCCESSFULLY        ");

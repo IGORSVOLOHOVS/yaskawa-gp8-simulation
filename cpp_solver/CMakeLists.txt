@@ -22,7 +22,6 @@ include_directories(
 add_library(yaskawa_kinematics STATIC
     src/yaskawa_kinematics.cpp
     src/yaskawa_trajectory.cpp
-    src/robot_physical_tree.cpp
 )
 target_link_libraries(yaskawa_kinematics PUBLIC Eigen3::Eigen Threads::Threads)
 
@@ -42,12 +41,11 @@ add_library(yaskawa_study STATIC
     src/study/vision_camera.cpp
     src/study/learning_models.cpp
     src/study/robot_specification.cpp
-    src/robot_physical_tree.cpp
 )
 target_link_libraries(yaskawa_study PUBLIC yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
 add_executable(benchmark_cpp src/benchmark_main.cpp)
-target_link_libraries(benchmark_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads::Threads)
+target_link_libraries(benchmark_cpp PRIVATE yaskawa_study yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
 add_executable(test_cpp src/test_kinematics.cpp)
 target_link_libraries(test_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads::Threads)
