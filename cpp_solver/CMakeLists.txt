@@ -24,41 +24,80 @@ add_library(yaskawa_kinematics STATIC
 )
 target_link_libraries(yaskawa_kinematics PUBLIC Eigen3::Eigen Threads::Threads)
 
+# Study layer (docs/STUDY_MODULE_CONTRACT.md): self-describing modules behind a
+# JSON-lines protocol. It reuses the kinematics engine, never forks it.
+add_library(yaskawa_study STATIC
+    src/study/module_registry.cpp
+    src/study/spatial_math.cpp
+)
+target_link_libraries(yaskawa_study PUBLIC yaskawa_kinematics Eigen3::Eigen Threads::Threads)
+
 add_executable(benchmark_cpp src/benchmark_main.cpp)
 target_link_libraries(benchmark_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
 add_executable(test_cpp src/test_kinematics.cpp)
 target_link_libraries(test_cpp PRIVATE yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
+add_executable(study_api src/study_api_main.cpp)
+target_link_libraries(study_api PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+
+add_executable(test_study_cpp src/test_study_modules.cpp)
+target_link_libraries(test_study_cpp PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+
 # Profile-Specific Compilation Flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(yaskawa_kinematics PRIVATE -O3 -march=native -ffast-math)
     target_compile_options(benchmark_cpp PRIVATE -O3 -march=native -ffast-math)
     target_compile_options(test_cpp PRIVATE -O3 -march=native -ffast-math)
+    # The study layer stays out of -ffast-math: it reports orthonormality drift
+    # and gimbal-lock margins, and those numbers must mean what they say.
+    target_compile_options(yaskawa_study PRIVATE -O3 -march=native)
+    target_compile_options(study_api PRIVATE -O3 -march=native)
+    target_compile_options(test_study_cpp PRIVATE -O3 -march=native)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(yaskawa_kinematics PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(benchmark_cpp PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(test_cpp PRIVATE -O0 -g -fsanitize=address)
     target_link_libraries(benchmark_cpp PRIVATE -fsanitize=address)
     target_link_libraries(test_cpp PRIVATE -fsanitize=address)
+    target_compile_options(yaskawa_study PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(study_api PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_cpp PRIVATE -O0 -g -fsanitize=address)
+    target_link_libraries(study_api PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_cpp PRIVATE -fsanitize=address)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
     target_compile_options(yaskawa_kinematics PRIVATE -O3 -pg -g -march=native)
     target_compile_options(benchmark_cpp PRIVATE -O3 -pg -g -march=native)
     target_compile_options(test_cpp PRIVATE -O3 -pg -g -march=native)
     target_link_libraries(benchmark_cpp PRIVATE -pg)
     target_link_libraries(test_cpp PRIVATE -pg)
+    target_compile_options(yaskawa_study PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(study_api PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_cpp PRIVATE -O3 -pg -g -march=native)
+    target_link_libraries(study_api PRIVATE -pg)
+    target_link_libraries(test_study_cpp PRIVATE -pg)
 elseif(CMAKE_BUILD_TYPE STREQUAL "PGO_Generate")
     target_compile_options(yaskawa_kinematics PRIVATE -O3 -fprofile-generate)
     target_compile_options(benchmark_cpp PRIVATE -O3 -fprofile-generate)
     target_compile_options(test_cpp PRIVATE -O3 -fprofile-generate)
     target_link_libraries(benchmark_cpp PRIVATE -fprofile-generate)
     target_link_libraries(test_cpp PRIVATE -fprofile-generate)
+    target_compile_options(yaskawa_study PRIVATE -O3 -fprofile-generate)
+    target_compile_options(study_api PRIVATE -O3 -fprofile-generate)
+    target_compile_options(test_study_cpp PRIVATE -O3 -fprofile-generate)
+    target_link_libraries(study_api PRIVATE -fprofile-generate)
+    target_link_libraries(test_study_cpp PRIVATE -fprofile-generate)
 elseif(CMAKE_BUILD_TYPE STREQUAL "PGO_Use")
     target_compile_options(yaskawa_kinematics PRIVATE -O3 -fprofile-use)
     target_compile_options(benchmark_cpp PRIVATE -O3 -fprofile-use)
     target_compile_options(test_cpp PRIVATE -O3 -fprofile-use)
     target_link_libraries(benchmark_cpp PRIVATE -fprofile-use)
     target_link_libraries(test_cpp PRIVATE -fprofile-use)
+    target_compile_options(yaskawa_study PRIVATE -O3 -fprofile-use)
+    target_compile_options(study_api PRIVATE -O3 -fprofile-use)
+    target_compile_options(test_study_cpp PRIVATE -O3 -fprofile-use)
+    target_link_libraries(study_api PRIVATE -fprofile-use)
+    target_link_libraries(test_study_cpp PRIVATE -fprofile-use)
 endif()
 
 message(STATUS "Yaskawa C++23 Real-Time Solver configured successfully!")

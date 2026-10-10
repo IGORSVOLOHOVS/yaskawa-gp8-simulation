@@ -72,6 +72,11 @@ case "${CMD}" in
         git config core.hooksPath .claude/hooks/git || true
         echo "--> Running C++26 Unit Tests..."
         "${BUILD_DIR}/test_cpp"
+        echo "--> Running Study Module Test Suite..."
+        "${BUILD_DIR}/test_study_cpp"
+        echo "--> Smoke-testing the study API catalogue..."
+        "${BUILD_DIR}/study_api" --describe > /dev/null
+        echo "--> Study API responded with a valid catalogue."
         ;;
 
     benchmark)
