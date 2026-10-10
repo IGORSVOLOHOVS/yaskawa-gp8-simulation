@@ -748,13 +748,25 @@ void test_ops_properties() {
 
     // Hilbert: the envelope of an amplitude-modulated vibration must find the
     // modulation rate.
+    //
+    // The carrier of the bearing_fault signal is the joint's own structural
+    // resonance, sqrt(k / J_structural) / 2pi, so it moves with the link
+    // inertia. With the old ESTIMATED box inertia for the L link (J = 0.2700
+    // kg m^2) the carrier sat at 25.26 Hz; with the inertia integrated from the
+    // CAD mesh and the density fitted to the GP8 datasheet mass of 32 kg
+    // (J = 0.4149 kg m^2) it is 20.38 Hz. The 23 Hz rate this check
+    // used to ask for is above that carrier, where amplitude demodulation is
+    // not defined at all - the sidebands fold through zero and the envelope
+    // spectrum peaks on an artefact. 7 Hz is a cage-rate fault well inside the
+    // new carrier, so the check is back to testing the Hilbert envelope rather
+    // than testing whether 23 Hz happens to fit under the resonance.
     Value fault = Value::object();
     fault.set("signal", Value("bearing_fault"));
-    fault.set("modulation_hz", Value(23.0));
+    fault.set("modulation_hz", Value(7.0));
     fault.set("length", Value(1024));
     const Value hilbert = module.invoke("hilbert_transform", fault);
-    check_near(hilbert["detected_modulation_hz"].as_double(), 23.0, 2.0,
-               "the envelope spectrum finds the 23 Hz fault modulation");
+    check_near(hilbert["detected_modulation_hz"].as_double(), 7.0, 2.0,
+               "the envelope spectrum finds the 7 Hz fault modulation");
     check(std::abs(hilbert["orthogonality"].as_double()) < 0.05,
           "the quadrature pair is 90 degrees apart (inner product " +
               json::number_to_string(hilbert["orthogonality"].as_double()) + ")");

@@ -44,24 +44,36 @@ The modules:
 
 ## 2. Module roster
 
-| Module | Courses served | Source path | Topic rows carried |
-| :--- | :--- | :--- | ---: |
-| `spatial_math` | 3883 (Block 1), 3286 (rotation matrices) | `cpp_solver/include/study/spatial_math.hpp` | 7 |
-| `dh_kinematics` | 3883 (Block 2, Block 6) | `cpp_solver/include/study/dh_kinematics.hpp` | 9 |
-| `jacobian_statics` | 3883 (Block 3) | `cpp_solver/include/study/jacobian_statics.hpp` | 5 |
-| `dynamics` | 3883 (Block 4), 3884 (plant) | `cpp_solver/include/study/dynamics.hpp` | 6 |
-| `trajectory_profiles` | 3883 (Block 5) | `cpp_solver/include/study/trajectory_profiles.hpp` | 7 |
-| `control_system` | 3884 (Sessions 1-24) | `cpp_solver/include/study/control_system.hpp` | 24 |
-| `digital_control` | 3884 (Sessions 25-26) | `cpp_solver/include/study/digital_control.hpp` | 2 |
-| `dsp_system` | 3882 (all 16 sessions), 3884 (Session 28) | `cpp_solver/include/study/dsp_system.hpp` | 17 |
-| `sensing_models` | 3884 (Sessions 27-28) | `cpp_solver/include/study/sensing_models.hpp` | 2 |
-| `vision_camera` | 3884 (Session 27), 3883 (exam Q1a) | `cpp_solver/include/study/vision_camera.hpp` | 1 |
-| `learning_models` | 2953 (ML, ANN, GA/GP), 3884 (Session 29) | `cpp_solver/include/study/learning_models.hpp` | 9 |
-| `probability_lab` | 3286 (probability, random variables, normal) | `cpp_solver/include/study/probability_lab.hpp` | 9 |
-| `linear_algebra_lab` | 3286 (linear algebra half) | `cpp_solver/include/study/linear_algebra_lab.hpp` | 15 |
-| `calculus_optimization` | 3286 (calculus and optimization), 2953 (gradient training) | `cpp_solver/include/study/calculus_optimization.hpp` | 4 |
-| `agent_architecture` | 3884 (Session 29), 2953 (Artificial Agents) | `cpp_solver/include/study/agent_architecture.hpp` | 2 |
-| `research_corpus` | 3900 (Blocks 1-3), 2953 (group project), 3883 (Block 6) | `cpp_solver/include/study/research_corpus.hpp` | 8 |
+| Module | Courses served | Source path | Topic rows carried | Built |
+| :--- | :--- | :--- | ---: | :--- |
+| `spatial_math` | 3883 (Block 1), 3286 (rotation matrices) | `cpp_solver/include/study/spatial_math.hpp` | 7 | yes |
+| `dh_kinematics` | 3883 (Block 2, Block 6) | `cpp_solver/include/study/dh_kinematics.hpp` | 9 | yes |
+| `jacobian_statics` | 3883 (Block 3) | `cpp_solver/include/study/jacobian_statics.hpp` | 5 | yes |
+| `dynamics` | 3883 (Block 4), 3884 (plant) | `cpp_solver/include/study/dynamics.hpp` | 6 | yes |
+| `trajectory_profiles` | 3883 (Block 5) | `cpp_solver/include/study/trajectory_profiles.hpp` | 7 | yes |
+| `control_system` | 3884 (Sessions 1-24) | `cpp_solver/include/study/control_system.hpp` | 24 | yes |
+| `digital_control` | 3884 (Sessions 25-26) | `cpp_solver/include/study/digital_control.hpp` | 2 | yes |
+| `dsp_system` | 3882 (all 16 sessions), 3884 (Session 28) | `cpp_solver/include/study/dsp_system.hpp` | 17 | yes |
+| `sensing_models` | 3884 (Sessions 27-28) | `cpp_solver/include/study/sensing_models.hpp` | 2 | yes |
+| `vision_camera` | 3884 (Session 27), 3883 (exam Q1a) | `cpp_solver/include/study/vision_camera.hpp` | 1 | yes |
+| `learning_models` | 2953 (ML, ANN, GA/GP), 3884 (Session 29) | `cpp_solver/include/study/learning_models.hpp` | 9 | yes |
+| `probability_lab` | 3286 (probability, random variables, normal) | `cpp_solver/include/study/probability_lab.hpp` | 9 | not yet |
+| `linear_algebra_lab` | 3286 (linear algebra half) | `cpp_solver/include/study/linear_algebra_lab.hpp` | 15 | not yet |
+| `calculus_optimization` | 3286 (calculus and optimization), 2953 (gradient training) | `cpp_solver/include/study/calculus_optimization.hpp` | 4 | not yet |
+| `agent_architecture` | 3884 (Session 29), 2953 (Artificial Agents) | `cpp_solver/include/study/agent_architecture.hpp` | 2 | not yet |
+| `research_corpus` | 3900 (Blocks 1-3), 2953 (group project), 3883 (Block 6) | `cpp_solver/include/study/research_corpus.hpp` | 8 | not yet |
+| `robot_specification` | 3883 (Block 6 validation), 3884 (actuator limits) | `cpp_solver/include/study/robot_specification.hpp` | 2 | yes |
+
+The **Built** column is the state of the code, not a plan. Twelve modules exist
+and are registered in `build_default_registry()`; the five marked *not yet*
+carry the topics of course 3286 and course 3900, which have no live module. A
+`not yet` row is a topic the student cannot drive from a panel today, and
+saying so is the point of the column.
+
+`robot_specification` was not in the original roster. It was added once the
+vendor documents were read: the published datasheet figures, the per-axis limits
+the engine actually uses against the ones Yaskawa publishes, the wrist load
+capacity check, and the modelled component tree with its provenance stated.
 
 Counts are rows in the map of §3, measured from this document; a row whose
 Module.op cell names two modules counts in both, which is why the column does

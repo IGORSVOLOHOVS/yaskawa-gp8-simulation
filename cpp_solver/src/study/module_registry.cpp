@@ -11,6 +11,7 @@
 #include "study/sensing_models.hpp"
 #include "study/vision_camera.hpp"
 #include "study/learning_models.hpp"
+#include "study/robot_specification.hpp"
 
 #include <chrono>
 #include <exception>
@@ -223,6 +224,8 @@ ModuleRegistry build_default_registry() {
     registry.add(std::make_unique<SensingModelsModule>());
     registry.add(std::make_unique<VisionCameraModule>());
     registry.add(std::make_unique<LearningModelsModule>());
+    // The robot itself: what the datasheet publishes, and the modelled part tree
+    registry.add(std::make_unique<RobotSpecificationModule>());
     return registry;
 }
 

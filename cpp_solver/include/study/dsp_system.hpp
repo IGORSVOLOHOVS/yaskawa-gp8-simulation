@@ -47,9 +47,21 @@ using Complex = std::complex<double>;
 constexpr double kGp8ControlRateHz = 1000.0;
 
 // ESTIMATED joint-side torsional stiffness of the gearbox + link pair [N m/rad].
-// It is not published by Yaskawa. With the link inertias of GP8_LINKS it places
-// the first structural mode of the L axis near 25 Hz and of the U axis near
-// 37 Hz, which is the band the arm audibly rings in after a fast move.
+// It is not published by Yaskawa. With the link inertias of GP8_LINKS - now
+// integrated from the CAD meshes rather than estimated as boxes - it places the
+// first structural mode of the L axis at 20.4 Hz, the S axis at 66.5 Hz, the
+// U axis at 100.4 Hz and the R axis at 42.1 Hz; the B and T axes come out above
+// the 0.45 fs clamp. The L figure is the one that matters, because it is the
+// slowest and it is the axis that carries the whole outer arm: ~20 Hz is the
+// band a 32 kg arm audibly rings in after a fast move.
+//
+// The S, U and R figures moved a long way when the inertias became integrals
+// (U from 37 Hz to 100 Hz) for a geometric reason worth knowing: the proxy
+// inertia these use is I_zz + m |com|^2 per link, and the old estimates put the
+// U link's centre of mass 0.15 m from its own frame, as if the forearm hung off
+// it. In the real URDF the forearm is the R link's mesh, so the U casting is
+// compact about its own frame and its proxy inertia is an order of magnitude
+// smaller. The dynamics module never used this proxy; it uses the full tensors.
 constexpr double kGp8JointStiffnessNmPerRad = 6.8e3;
 
 // ---------------------------------------------------------------------------

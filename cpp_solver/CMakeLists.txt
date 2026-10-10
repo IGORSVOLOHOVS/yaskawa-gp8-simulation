@@ -41,6 +41,8 @@ add_library(yaskawa_study STATIC
     src/study/sensing_models.cpp
     src/study/vision_camera.cpp
     src/study/learning_models.cpp
+    src/study/robot_specification.cpp
+    src/robot_physical_tree.cpp
 )
 target_link_libraries(yaskawa_study PUBLIC yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
@@ -67,6 +69,8 @@ add_executable(test_study_dsp src/test_study_dsp.cpp)
 target_link_libraries(test_study_dsp PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
 add_executable(test_study_intelligence src/test_study_intelligence.cpp)
 target_link_libraries(test_study_intelligence PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+add_executable(test_study_specification src/test_study_specification.cpp)
+target_link_libraries(test_study_specification PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
 
 # Profile-Specific Compilation Flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -106,7 +110,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     )
     foreach(study_target yaskawa_study study_api test_study_cpp test_study_kinematics
                          test_study_dynamics test_study_control test_study_dsp
-                         test_study_intelligence)
+                         test_study_intelligence test_study_specification)
         target_compile_options(${study_target} PRIVATE ${STUDY_OPT_FLAGS})
     endforeach()
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -123,11 +127,13 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(test_study_control PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(test_study_dsp PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(test_study_intelligence PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_specification PRIVATE -O0 -g -fsanitize=address)
     target_link_libraries(test_study_kinematics PRIVATE -fsanitize=address)
     target_link_libraries(test_study_dynamics PRIVATE -fsanitize=address)
     target_link_libraries(test_study_control PRIVATE -fsanitize=address)
     target_link_libraries(test_study_dsp PRIVATE -fsanitize=address)
     target_link_libraries(test_study_intelligence PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_specification PRIVATE -fsanitize=address)
     target_link_libraries(study_api PRIVATE -fsanitize=address)
     target_link_libraries(test_study_cpp PRIVATE -fsanitize=address)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
@@ -144,11 +150,13 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
     target_compile_options(test_study_control PRIVATE -O3 -pg -g -march=native)
     target_compile_options(test_study_dsp PRIVATE -O3 -pg -g -march=native)
     target_compile_options(test_study_intelligence PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_specification PRIVATE -O3 -pg -g -march=native)
     target_link_libraries(test_study_kinematics PRIVATE -pg)
     target_link_libraries(test_study_dynamics PRIVATE -pg)
     target_link_libraries(test_study_control PRIVATE -pg)
     target_link_libraries(test_study_dsp PRIVATE -pg)
     target_link_libraries(test_study_intelligence PRIVATE -pg)
+    target_link_libraries(test_study_specification PRIVATE -pg)
     target_link_libraries(study_api PRIVATE -pg)
     target_link_libraries(test_study_cpp PRIVATE -pg)
 elseif(CMAKE_BUILD_TYPE STREQUAL "PGO_Generate")
