@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GP8 Study Console</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+</head>
+<body>
+    <aside id="sidebar">
+        <div class="brand">
+            <h1>GP8 Study Console</h1>
+            <div class="brand-sub">Every panel is generated from describe()</div>
+        </div>
+        <input id="search" type="search" placeholder="Search modules, ops, topics  (/)" autocomplete="off">
+        <div id="count" class="count">loading</div>
+        <nav id="tree" class="tree"></nav>
+        <div class="sidebar-foot">
+            <span class="kbd">&larr;</span><span class="kbd">&rarr;</span> step through ops
+            &middot; <span class="kbd">/</span> search
+            &middot; <a href="http://localhost:8080/" target="_blank" rel="noopener">dashboard :8080</a>
+        </div>
+    </aside>
+
+    <main id="main">
+        <div id="banner" class="banner" style="display:none"></div>
+
+        <section id="scene">
+            <div id="viewport"></div>
+            <div class="scene-bar">
+                <span class="scene-title">GP8 workcell &middot; floor grid and base frame always on</span>
+                <span id="scene-note" class="scene-note">no 3D output from this op</span>
+            </div>
+        </section>
+
+        <section id="panel">
+            <div id="panel-header" class="panel-header"></div>
+            <div class="panel-body">
+                <div class="panel-col controls-col">
+                    <div class="col-title">Parameters</div>
+                    <div id="controls"></div>
+                    <div id="panel-error" class="panel-error" style="display:none"></div>
+                </div>
+                <div class="panel-col outputs-col">
+                    <div class="col-title">Outputs</div>
+                    <div id="outputs"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="status" class="status">starting</div>
+
+    <script src="/describe.js"></script>
+    <script src="/plots.js"></script>
+    <script src="/robot3d.js"></script>
+    <script src="/panels.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>

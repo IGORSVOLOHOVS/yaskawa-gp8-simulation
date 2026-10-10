@@ -10,9 +10,15 @@ The `./robot` bash script is the primary execution interface for all lifecycle t
 
 - `./robot init` : Verify environment and required C++ build toolchain (`g++`, `cmake`, `eigen3`).
 - `./robot build [release|debug|profile|pgo]` : Build C++26 solver with the selected profile.
-- `./robot test` : Set git hooks path and run the unit test suite.
+- `./robot test` : Set git hooks path and run every unit test suite: the engine
+  (`test_cpp`), the study layer (`test_study_cpp`) and the per-topic suites for
+  kinematics, dynamics, control, DSP and intelligence, then smoke-test the
+  study API catalogue.
 - `./robot benchmark` : Execute performance benchmarks and export callgrind / gprof bottleneck traces to `profiling/`.
-- `./robot run [web|ros]` : Launch interactive 3D WebGL Dashboard (`web`) or ROS 2 MoveIt scene (`ros`).
+- `./robot run [web|ros|study]` : Launch the interactive 3D WebGL dashboard (`web`),
+  the ROS 2 MoveIt scene (`ros`), or the Study Console (`study`, port 8090) which
+  exposes every course topic as a live panel generated from the modules'
+  self-description. See `docs/STUDY_MODULE_CONTRACT.md`.
 - `./robot install` : Install compiled executables to `install/bin/`.
 - `./robot uninstall` : Remove installed binaries from `install/bin/`.
 - `./robot clean` : Clean build, profiling, and install artifacts.
