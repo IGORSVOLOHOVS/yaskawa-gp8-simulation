@@ -1,0 +1,388 @@
+{
+  "assumption": "each link is a solid of uniform effective density, the same density for every link; the real links are hollow castings, so the density is a stand-in fitted to the published total mass, not a material property",
+  "base_link": {
+    "axis": "base",
+    "bbox_max_m": [
+      0.10000000894069672,
+      0.09953989088535309,
+      0.1990000158548355
+    ],
+    "bbox_min_m": [
+      -0.137332946062088,
+      -0.10000008344650269,
+      -1.5348196029663086e-05
+    ],
+    "closure_error": 0.0,
+    "com_dh_frame_m": [
+      -0.005797216918896001,
+      -3.576146248709019e-05,
+      0.09380115837545983
+    ],
+    "com_mesh_frame_m": [
+      -0.005797216918896001,
+      -3.576146248709019e-05,
+      0.09380115837545983
+    ],
+    "dh_index": -1,
+    "inertia_about_own_joint_axis_kgm2": null,
+    "inertia_dh_frame_about_com_kgm2": {
+      "ixx": 0.04723219311836792,
+      "ixy": -1.0693460906449079e-05,
+      "ixz": -0.000416608394071868,
+      "iyy": 0.052107786891258064,
+      "iyz": -2.0054638339405933e-05,
+      "izz": 0.04524977790199276
+    },
+    "mass_kg": 9.077469159065652,
+    "mesh": "gp8_base_link.stl",
+    "own_joint_axis_in_dh_frame": null,
+    "principal_moments_kgm2": [
+      0.045165717207843716,
+      0.04731617665825415,
+      0.052107864045520896
+    ],
+    "sha256": "704b3b09b4d948f68ade306357e29933453e760716b949fcefacdd1da816e6c4",
+    "surface_area_m2": 0.22444377949332003,
+    "triangles": 11698,
+    "unmatched_directed_edges": 0,
+    "volume_m3": 0.00573565589229852
+  },
+  "base_mass_kg": 9.077469159065652,
+  "datasheet": {
+    "allowable_wrist_inertia_kgm2": {
+      "B": 0.5,
+      "R": 0.5,
+      "T": 0.2
+    },
+    "horizontal_reach_m": 0.727,
+    "payload_kg": 8.0,
+    "robot_mass_kg": 32.0,
+    "robot_mass_source": "DS-699-H page 2, SPECIFICATIONS row Weight, GP8 column"
+  },
+  "effective_density_kg_m3": 1582.6383816459963,
+  "fill_fraction_aluminium": 0.5861623635725912,
+  "fill_fraction_steel": 0.20160998492305685,
+  "generated_by": "tools/compute_link_mass_properties.py",
+  "method": "exact tetrahedron decomposition of the closed STL surface; volume, first and second moments integrated analytically, shifted to the centroid by the parallel-axis theorem, then rotated from the mesh frame (URDF link frame) into the link's standard-DH frame",
+  "moving_links": [
+    {
+      "axis": "S",
+      "bbox_max_m": [
+        0.10080860555171967,
+        0.08300001174211502,
+        0.06080812215805054
+      ],
+      "bbox_min_m": [
+        -0.09701000899076462,
+        -0.08300000429153442,
+        -0.13990598917007446
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        -0.024932160465869217,
+        0.043833696349750324,
+        -2.6316794879876337e-05
+      ],
+      "com_mesh_frame_m": [
+        0.015067839534130784,
+        -2.6316794879873653e-05,
+        -0.043833696349750324
+      ],
+      "dh_index": 0,
+      "inertia_about_own_joint_axis_kgm2": 0.018002796224783374,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 0.022767912413089283,
+        "ixy": 0.0038930824005492877,
+        "ixz": -6.906499423633204e-06,
+        "iyy": 0.018002796224783374,
+        "iyz": 1.6049864472127496e-05,
+        "izz": 0.025196365287517657
+      },
+      "mass_kg": 5.402924121164686,
+      "mesh": "gp8_link_1_s.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "principal_moments_kgm2": [
+        0.015821039728286704,
+        0.024949623254830446,
+        0.02519641094227316
+      ],
+      "sha256": "3bfb02014a83690a7724e6ea378162431d56fca4ff536f9331eea7c7ef340036",
+      "surface_area_m2": 0.14233891429717768,
+      "triangles": 8848,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 0.0034138715349146696
+    },
+    {
+      "axis": "L",
+      "bbox_max_m": [
+        0.06400715559720993,
+        0.11500021070241928,
+        0.39799997210502625
+      ],
+      "bbox_min_m": [
+        -0.0920005589723587,
+        -0.11500048637390137,
+        -0.06399890780448914
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        -0.18489857329580242,
+        -0.028244948922959017,
+        0.0003106761840757692
+      ],
+      "com_mesh_frame_m": [
+        -0.028244948922959007,
+        0.0003106761840757594,
+        0.1601014267041976
+      ],
+      "dh_index": 1,
+      "inertia_about_own_joint_axis_kgm2": 0.1078477564311296,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 0.06470676983693428,
+        "ixy": 0.001994800975105788,
+        "ixz": -0.0005428984654015654,
+        "iyy": 0.1531078819961164,
+        "iyz": -6.690179284935327e-05,
+        "izz": 0.1078477564311296
+      },
+      "mass_kg": 8.776323186907899,
+      "mesh": "gp8_link_2_l.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "principal_moments_kgm2": [
+        0.06465499689357838,
+        0.10785440070873697,
+        0.1531530106618651
+      ],
+      "sha256": "521f448f29717011e6a0f89d9f9429b4f95e1439fb6938ee40ed4c4669156272",
+      "surface_area_m2": 0.28944117621678234,
+      "triangles": 20428,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 0.005545374918672345
+    },
+    {
+      "axis": "U",
+      "bbox_max_m": [
+        0.07001863420009613,
+        0.0705001950263977,
+        0.10327762365341187
+      ],
+      "bbox_min_m": [
+        -0.10498473793268204,
+        -0.07350009679794312,
+        -0.054633140563964844
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        -0.02059778188850733,
+        0.000734797276928157,
+        -0.017620469534741064
+      ],
+      "com_mesh_frame_m": [
+        -0.017620469534741043,
+        -0.0007347972769281804,
+        0.019402218111492706
+      ],
+      "dh_index": 2,
+      "inertia_about_own_joint_axis_kgm2": 0.016504140506882602,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 0.015342695579922598,
+        "ixy": 6.059860480925574e-05,
+        "ixz": -0.0010558604393400284,
+        "iyy": 0.016504140506882602,
+        "iyz": -0.00011406971645337927,
+        "izz": 0.013711232050938943
+      },
+      "mass_kg": 4.602007365880213,
+      "mesh": "gp8_link_3_u.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "principal_moments_kgm2": [
+        0.013190969452625406,
+        0.01584466672678324,
+        0.016522431958335505
+      ],
+      "sha256": "13d212cc99fc47adf4e09054dc089be3b53f88c3da4293b5a64769de587ab986",
+      "surface_area_m2": 0.1189003491787162,
+      "triangles": 12834,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 0.0029078072535394807
+    },
+    {
+      "axis": "R",
+      "bbox_max_m": [
+        0.03599938750267029,
+        0.055002786219120026,
+        0.05300086736679077
+      ],
+      "bbox_min_m": [
+        -0.2685000002384186,
+        -0.055001333355903625,
+        -0.05055844783782959
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        -4.317905501006963e-05,
+        -0.1489468982103323,
+        -9.337172981827421e-05
+      ],
+      "com_mesh_frame_m": [
+        -0.14894689821033225,
+        -9.337172981827696e-05,
+        -4.3179055010060513e-05
+      ],
+      "dh_index": 3,
+      "inertia_about_own_joint_axis_kgm2": 0.005743550779949069,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 0.021181344231643567,
+        "ixy": -5.747691452043317e-08,
+        "ixz": -9.286767437668065e-07,
+        "iyy": 0.005743550779949069,
+        "iyz": 8.02139813422997e-06,
+        "izz": 0.020243930960751708
+      },
+      "mass_kg": 3.462112555069785,
+      "mesh": "gp8_link_4_r.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "principal_moments_kgm2": [
+        0.005743546342420174,
+        0.020243934477982617,
+        0.02118134515194156
+      ],
+      "sha256": "7b16986bf8a07f8d4b4dc6fb61debe40f614aeaf74c71bd20830b2f27163b128",
+      "surface_area_m2": 0.13104977855761016,
+      "triangles": 15132,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 0.0021875575590862856
+    },
+    {
+      "axis": "B",
+      "bbox_max_m": [
+        0.07600003480911255,
+        0.033007871359586716,
+        0.03850466012954712
+      ],
+      "bbox_min_m": [
+        -0.038000017404556274,
+        -0.03299830108880997,
+        -0.039082467555999756
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        0.00016772507266359505,
+        -1.6641019439129965e-05,
+        0.017569230338651022
+      ],
+      "com_mesh_frame_m": [
+        0.017569230338651078,
+        1.6641019439128274e-05,
+        0.00016772507266359397
+      ],
+      "dh_index": 4,
+      "inertia_about_own_joint_axis_kgm2": 0.0007759749504082394,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 0.000749969058342535,
+        "ixy": -6.497004612947267e-07,
+        "ixz": -2.098688033325847e-06,
+        "iyy": 0.0007759749504082394,
+        "iyz": -3.0747786618025643e-07,
+        "izz": 0.00041583688269993484
+      },
+      "mass_kg": 0.6394752660223259,
+      "mesh": "gp8_link_5_b.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "principal_moments_kgm2": [
+        0.0004158234318241764,
+        0.0007499661073552634,
+        0.0007759913522712693
+      ],
+      "sha256": "e6bfa28b82735be7b0f8ed7c39d22b6ad4da184fd6f76c899b525b0ea8c457fd",
+      "surface_area_m2": 0.039496052764862365,
+      "triangles": 2922,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 0.00040405646257438187
+    },
+    {
+      "axis": "T",
+      "bbox_max_m": [
+        0.08000001311302185,
+        0.03005385771393776,
+        0.030072033405303955
+      ],
+      "bbox_min_m": [
+        0.06749999523162842,
+        -0.029909323900938034,
+        -0.030022621154785156
+      ],
+      "closure_error": 0.0,
+      "com_dh_frame_m": [
+        5.562482253414469e-05,
+        1.0915422864462998e-07,
+        0.07405778739624326
+      ],
+      "com_mesh_frame_m": [
+        0.07405778739624332,
+        -1.0915422864285411e-07,
+        5.562482253414016e-05
+      ],
+      "dh_index": 5,
+      "inertia_about_own_joint_axis_kgm2": 1.4259158211775243e-05,
+      "inertia_dh_frame_about_com_kgm2": {
+        "ixx": 7.7104943459833e-06,
+        "ixy": -5.739420504984827e-09,
+        "ixz": -7.325558455414577e-09,
+        "iyy": 7.663540354181719e-06,
+        "iyz": -1.1979167914893227e-09,
+        "izz": 1.4259158211775243e-05
+      },
+      "mass_kg": 0.039688345889435435,
+      "mesh": "gp8_link_6_t.stl",
+      "own_joint_axis_in_dh_frame": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "principal_moments_kgm2": [
+        7.662848329616344e-06,
+        7.711177960696605e-06,
+        1.4259166621627317e-05
+      ],
+      "sha256": "96b447d0b63871ef6a3a77521e49a54e577b59c7ec59cadf6966e58260fbd0dc",
+      "surface_area_m2": 0.00847296178551988,
+      "triangles": 636,
+      "unmatched_directed_edges": 0,
+      "volume_m3": 2.5077330582718613e-05
+    }
+  ],
+  "moving_mass_kg": 22.922530840934343,
+  "published_mass_dispute": {
+    "fitted_to_kg": 32.0,
+    "fitted_to_source": "DS-699-H page 2, SPECIFICATIONS row Weight, GP8 column",
+    "gp7_column_kg": 34.0,
+    "gp7_column_source": "DS-699-H page 2, SPECIFICATIONS row Weight, GP7 column",
+    "manual_kg": 35.0,
+    "manual_mass_scale_factor": 1.09375,
+    "manual_source": "HW1484385 page 4, Table 5-1 Approx. Mass",
+    "note": "Yaskawa's own two documents disagree on the GP8 mass: DS-699-H page 2 prints 32 kg in the GP8 column and HW1484385 page 4 Table 5-1 prints 35 kg. The 34 kg this project previously used is the GP7 column of the same datasheet row, i.e. the adjacent robot. Every number in this file is fitted to the 32 kg GP8 datasheet figure. Mass and inertia are both linear in the density, so the 35 kg fit is this file scaled by manual_mass_scale_factor with the centres of mass unchanged; no second table is emitted."
+  },
+  "total_mass_kg": 31.999999999999996,
+  "total_mesh_volume_m3": 0.020219400951668402
+}

@@ -44,6 +44,21 @@ case "${CMD}" in
         cmake --version
         g++ --version
         pkg-config --cflags eigen3
+        echo "--> Fetching external vendor assets (Yaskawa documents, upstream GP8 model)..."
+        FETCH_PY=""
+        for CANDIDATE in python3 python; do
+            if command -v "${CANDIDATE}" > /dev/null 2>&1 && "${CANDIDATE}" -c "import sys" > /dev/null 2>&1; then
+                FETCH_PY="${CANDIDATE}"
+                break
+            fi
+        done
+        if [ -z "${FETCH_PY}" ]; then
+            echo "    WARNING: no working python3/python found; skipping the external asset fetch."
+        else
+            "${FETCH_PY}" "${PROJECT_DIR}/tools/fetch_external_assets.py" --offline-ok || true
+            echo "--> External assets live in ${PROJECT_DIR}/assets/downloads (git-ignored)."
+            echo "    See docs/EXTERNAL_ASSETS.md; a network failure here is a warning, never a build failure."
+        fi
         echo "--> Environment initialization complete!"
         ;;
 
@@ -74,7 +89,7 @@ case "${CMD}" in
         echo "--> Running C++26 Unit Tests..."
         "${BUILD_DIR}/test_cpp"
         echo "--> Running Study Module Test Suites..."
-        STUDY_SUITES="test_study_cpp test_study_kinematics test_study_dynamics test_study_control test_study_dsp test_study_intelligence"
+        STUDY_SUITES="test_study_cpp test_study_kinematics test_study_dynamics test_study_control test_study_dsp test_study_intelligence test_study_specification"
         for suite in ${STUDY_SUITES}; do
             echo "    --> ${suite}"
             "${BUILD_DIR}/${suite}"

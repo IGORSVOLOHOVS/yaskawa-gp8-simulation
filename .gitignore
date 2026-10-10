@@ -22,3 +22,6 @@ __pycache__/
 
 # Exclude private environment keys from git commits
 .claude/.env
+
+# Vendor documents and upstream robot meshes fetched by tools/fetch_external_assets.py
+/assets/downloads/

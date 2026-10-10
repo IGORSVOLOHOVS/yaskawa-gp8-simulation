@@ -21,9 +21,16 @@
 // bug in one of the algorithms and nothing else. src/test_study_dynamics.cpp
 // asserts the agreement to 1e-8 on random states.
 //
-// Model honesty: the masses, centres of mass, inertia tensors, gear ratios and
-// friction coefficients in gp8_model.hpp are ESTIMATED, not published by
-// Yaskawa. Every number this module returns is a number about that model.
+// Model honesty: the masses, centres of mass and inertia tensors in
+// gp8_model.hpp are integrated from the Yaskawa CAD meshes by
+// tools/compute_link_mass_properties.py, with one effective density solved so
+// the seven links sum to the published 32 kg of the GP8 datasheet column (a
+// figure Yaskawa's manual disputes at 35 kg; see GP8_ROBOT_MASS_KG) - that
+// geometry is real, the
+// uniform-density assumption behind the split between the links is not. The
+// gear ratios, rotor inertias and friction coefficients remain ESTIMATED;
+// Yaskawa publishes none of them. Every number this module returns is a number
+// about that model.
 
 #include "study/gp8_model.hpp"
 #include "study/study_module.hpp"
