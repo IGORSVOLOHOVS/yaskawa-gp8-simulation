@@ -1,0 +1,278 @@
+{
+  "robot": "Yaskawa Motoman GP8",
+  "structure": "Vertically articulated, 6 axes, handling application",
+  "types": ["YR-1-06VX8-A00", "YR-1-06VX8-F00 (food-grade grease)"],
+  "column_read": "GP8",
+  "extracted_on": "2026-10-10",
+  "about": "Every value below was read off a published Yaskawa document and carries the document id and the page it was read on. Nothing here is modelled, derived or guessed; a number without a page citation does not belong in this file. The GP7 shares both documents with the GP8, so each value states which column or table it came from.",
+  "sources": {
+    "DS-699-H": {
+      "title": "GP7 and GP8 Robots - Compact, High-Speed Robots",
+      "kind": "product datasheet",
+      "document_number": "DS-699-H",
+      "manual_number": null,
+      "publisher": "Yaskawa America, Inc. - Motoman Robotics Division",
+      "issued": "2019-05",
+      "page_count": 2,
+      "url": "https://cdn.logic-control.com/media/gp7_gp8.pdf",
+      "read_note": "One datasheet covers both robots in two columns. Every value taken from it here is the GP8 column; the GP7 column is deliberately ignored."
+    },
+    "HW1484385": {
+      "title": "MOTOMAN-GP8, -GP7 Supplemental Instructions",
+      "kind": "instruction manual",
+      "document_number": "180382-1CD",
+      "manual_number": "HW1484385",
+      "publisher": "Yaskawa Electric Corporation",
+      "page_count": 21,
+      "url": "https://res.cloudinary.com/reshape-prod/image/upload/v1706300926/products/documents/o8go5smyhvld5yonsave.pdf",
+      "read_note": "Table 5-1 Basic Specifications (GP8) is on page 4, Table 3-3 Ambient Conditions on page 3. The manual documents type YR-1-06VX8-F00 (food-grade grease) and states that it differs from the standard YR-1-06VX8-A00 (manual HW1483944) in grease, application, location, basic specifications, inspection schedule and recommended spare parts."
+    }
+  },
+  "general": {
+    "controlled_axes": {
+      "value": 6,
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Controlled axes"}
+    },
+    "payload": {
+      "value": 8.0,
+      "unit": "kg",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Maximum payload"},
+      "note": "Wrist payload. The manual repeats it on page 4 as Payload / Wrist part 8 kg."
+    },
+    "payload_u_arm": {
+      "value": 1.0,
+      "unit": "kg",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Payload / U-arm"},
+      "note": "The allowable U-arm load varies with the wrist load; the manual refers to chapter 7.1.1."
+    },
+    "horizontal_reach": {
+      "value": 727.0,
+      "unit": "mm",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Horizontal reach"},
+      "note": "The dimension drawing on the same page prints it as R727."
+    },
+    "vertical_reach": {
+      "value": 1312.0,
+      "unit": "mm",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Vertical reach"}
+    },
+    "repeatability": {
+      "value": 0.02,
+      "unit": "mm",
+      "tolerance": "+/-0.02 mm",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Repeatability"},
+      "note": "Page 1 of the same datasheet repeats +/-0.02 mm repeatability for the GP8."
+    },
+    "repeatability_manual": {
+      "value": 0.01,
+      "unit": "mm",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Repeatability"},
+      "note": "Conformed to ISO 9283. This disagrees with DS-699-H, which prints +/-0.02 mm; both values are kept with their own citation rather than averaged."
+    },
+    "mass": {
+      "value": 32.0,
+      "unit": "kg",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Weight"},
+      "note": "GP8 column. The GP7 column on the same row reads 34 kg; this project used that GP7 figure as the GP8 mass until the datasheet was read, and cpp_solver/include/study/gp8_model.hpp now carries the 32 kg GP8 value."
+    },
+    "mass_manual": {
+      "value": 35.0,
+      "unit": "kg",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Approx. Mass"},
+      "note": "Approximate mass of type YR-1-06VX8-F00. Disagrees with the 32 kg of DS-699-H."
+    },
+    "noise": {
+      "value": 75.0,
+      "unit": "dB",
+      "tolerance": "or less",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Noise"},
+      "note": "Equivalent continuous A-weighted sound pressure level to ISO 11201, at maximum load and maximum speed."
+    },
+    "controller": {
+      "value": "YRC1000 (ERAR-1000-06VX8) or YRC1000micro (ERBR-100-06VX8)",
+      "unit": "",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Applicable controller"}
+    }
+  },
+  "electrical": {
+    "supply_voltage_min": {
+      "value": 380.0,
+      "unit": "VAC",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Power requirements, 380-480 VAC"}
+    },
+    "supply_voltage_max": {
+      "value": 480.0,
+      "unit": "VAC",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Power requirements, 380-480 VAC"}
+    },
+    "power_capacity": {
+      "value": 1.0,
+      "unit": "kVA",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Power rating"},
+      "note": "The manual prints the same 1 kVA on page 4 as Power Capacity."
+    },
+    "internal_user_io_conductors": {
+      "value": 17.0,
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Internal user I/O cable"},
+      "note": "17 conductors plus ground, through connector LF13WBRB-20S / LF13WBRB-20P."
+    },
+    "internal_user_air_lines": {
+      "value": 2.0,
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, row Internal user air line"},
+      "note": "Two 1/4 inch connections, tapped Rc1/4 with pipe plug."
+    }
+  },
+  "protection": {
+    "wrist": {
+      "value": "IP67",
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 1, "table": "Key Benefits text"}
+    },
+    "body_standard": {
+      "value": "IP54",
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 1, "table": "Key Benefits text"}
+    },
+    "body_xp_package": {
+      "value": "IP65",
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 1, "table": "Key Benefits text"},
+      "note": "Optional eXtra Protection package. Page 2 warns that specifications for the XP package may differ."
+    },
+    "enclosure_manual": {
+      "value": "IP67",
+      "unit": "",
+      "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, row Protective enclosure"},
+      "note": "The manual states IP67 for the whole manipulator, where the datasheet splits IP67 wrist from IP54 body."
+    }
+  },
+  "mounting": {
+    "options": {
+      "value": "Floor, wall, tilt or ceiling",
+      "unit": "",
+      "source": {"document": "DS-699-H", "page": 2, "table": "Mounting Options line"},
+      "note": "The manual adds on page 4 that the S-axis operating range is limited for the tilt- and wall-mounted cases."
+    }
+  },
+  "ambient": {
+    "temperature_min": {
+      "value": 15.0,
+      "unit": "degC",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"}
+    },
+    "temperature_max": {
+      "value": 45.0,
+      "unit": "degC",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"}
+    },
+    "humidity_min": {
+      "value": 20.0,
+      "unit": "%RH",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"}
+    },
+    "humidity_max": {
+      "value": 80.0,
+      "unit": "%RH",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"},
+      "note": "No condensation."
+    },
+    "vibration_max": {
+      "value": 4.9,
+      "unit": "m/s^2",
+      "tolerance": "or less",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"},
+      "note": "Printed as 4.9 m/s2 (0.5G) or less."
+    },
+    "altitude_max": {
+      "value": 1000.0,
+      "unit": "m",
+      "tolerance": "or less",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"}
+    },
+    "installation_flatness_max": {
+      "value": 0.5,
+      "unit": "mm",
+      "tolerance": "or less",
+      "source": {"document": "HW1484385", "page": 3, "table": "Table 3-3 Ambient Conditions"}
+    }
+  },
+  "axes": [
+    {
+      "axis": "S",
+      "name": "Swivel base (turning)",
+      "motion_range_min": {"value": -170.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes S, GP8 column, +/-170"}},
+      "motion_range_max": {"value": 170.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes S, GP8 column, +/-170"}},
+      "motion_range_min_manual": {"value": -170.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, S-axis"}},
+      "motion_range_max_manual": {"value": 170.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, S-axis"}},
+      "max_speed": {"value": 455.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, S, GP8 column"}},
+      "max_speed_manual": {"value": 7.94, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, S-axis, 7.94 rad/s = 455 deg/s"}}
+    },
+    {
+      "axis": "L",
+      "name": "Lower arm",
+      "motion_range_min": {"value": -65.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes L, GP8 column, +150/-65"}},
+      "motion_range_max": {"value": 150.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes L, GP8 column, +150/-65"}},
+      "motion_range_min_manual": {"value": -65.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, L-axis, -65 to +145"}},
+      "motion_range_max_manual": {"value": 145.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, L-axis, -65 to +145"}},
+      "max_speed": {"value": 385.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, L, GP8 column"}},
+      "max_speed_manual": {"value": 6.72, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, L-axis, 6.72 rad/s = 385 deg/s"}}
+    },
+    {
+      "axis": "U",
+      "name": "Upper arm",
+      "motion_range_min": {"value": -113.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes U, GP8 column, +255/-113"}},
+      "motion_range_max": {"value": 255.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes U, GP8 column, +255/-113"}},
+      "motion_range_min_manual": {"value": -70.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, U-axis, -70 to +190"}},
+      "motion_range_max_manual": {"value": 190.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, U-axis, -70 to +190"}},
+      "max_speed": {"value": 520.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, U, GP8 column"}},
+      "max_speed_manual": {"value": 9.07, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, U-axis, 9.07 rad/s = 520 deg/s"}}
+    },
+    {
+      "axis": "R",
+      "name": "Arm roll (wrist roll)",
+      "motion_range_min": {"value": -190.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes R, GP8 column, +/-190"}},
+      "motion_range_max": {"value": 190.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes R, GP8 column, +/-190"}},
+      "motion_range_min_manual": {"value": -190.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, R-axis"}},
+      "motion_range_max_manual": {"value": 190.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, R-axis"}},
+      "max_speed": {"value": 550.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, R, GP8 column"}},
+      "max_speed_manual": {"value": 9.59, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, R-axis, 9.59 rad/s = 550 deg/s"}},
+      "allowable_moment": {"value": 17.0, "unit": "N m", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment, R, GP8 column"}, "note": "The manual prints the same value on page 4 as 17 N m (1.73 kgf m)."},
+      "allowable_moment_of_inertia": {"value": 0.5, "unit": "kg m^2", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment of inertia, R, GP8 column"}, "note": "The manual prints it as Allowable Inertia (GD2/4) on page 4."}
+    },
+    {
+      "axis": "B",
+      "name": "Wrist bend (pitch/yaw)",
+      "motion_range_min": {"value": -135.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes B, GP8 column, +/-135"}},
+      "motion_range_max": {"value": 135.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes B, GP8 column, +/-135"}},
+      "motion_range_min_manual": {"value": -135.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, B-axis"}},
+      "motion_range_max_manual": {"value": 135.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, B-axis"}},
+      "max_speed": {"value": 550.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, B, GP8 column"}},
+      "max_speed_manual": {"value": 9.59, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, B-axis, 9.59 rad/s = 550 deg/s"}},
+      "allowable_moment": {"value": 17.0, "unit": "N m", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment, B, GP8 column"}, "note": "The manual prints the same value on page 4 as 17 N m (1.73 kgf m)."},
+      "allowable_moment_of_inertia": {"value": 0.5, "unit": "kg m^2", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment of inertia, B, GP8 column"}, "note": "The manual prints it as Allowable Inertia (GD2/4) on page 4."}
+    },
+    {
+      "axis": "T",
+      "name": "Tool flange twist",
+      "motion_range_min": {"value": -360.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes T, GP8 column, +/-360"}},
+      "motion_range_max": {"value": 360.0, "unit": "deg", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Axes T, GP8 column, +/-360"}},
+      "motion_range_min_manual": {"value": -360.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, T-axis"}},
+      "motion_range_max_manual": {"value": 360.0, "unit": "deg", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Range of Motion, T-axis"}},
+      "max_speed": {"value": 1000.0, "unit": "deg/s", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Maximum speed, T, GP8 column"}},
+      "max_speed_manual": {"value": 17.45, "unit": "rad/s", "source": {"document": "HW1484385", "page": 4, "table": "Table 5-1, Maximum Speed, T-axis, 17.45 rad/s = 1000 deg/s"}},
+      "allowable_moment": {"value": 10.0, "unit": "N m", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment, T, GP8 column"}, "note": "The manual prints the same value on page 4 as 10 N m (1.02 kgf m)."},
+      "allowable_moment_of_inertia": {"value": 0.2, "unit": "kg m^2", "source": {"document": "DS-699-H", "page": 2, "table": "SPECIFICATIONS, Allowable moment of inertia, T, GP8 column"}, "note": "The manual prints it as Allowable Inertia (GD2/4) on page 4."}
+    }
+  ],
+  "known_disagreements": [
+    "Robot mass: DS-699-H page 2 prints 32 kg for the GP8 and 34 kg for the GP7; HW1484385 page 4 prints 35 kg for the GP8 food-grade type. cpp_solver/include/study/gp8_model.hpp uses 34 kg, which is the GP7 datasheet figure.",
+    "Repeatability: DS-699-H page 2 prints +/-0.02 mm; HW1484385 page 4 prints 0.01 mm to ISO 9283.",
+    "L-axis upper limit: DS-699-H page 2 prints +150 deg for the GP8; HW1484385 page 4 prints +145 deg. GP8_JOINT_LIMITS holds 2.530 rad = 144.96 deg, i.e. the manual.",
+    "U-axis range: DS-699-H page 2 prints +255/-113 deg for the GP8; HW1484385 page 4 prints -70 to +190 deg. GP8_JOINT_LIMITS holds -1.221 to 3.316 rad = -69.96 to 190.0 deg, i.e. the manual.",
+    "S-axis maximum speed: both documents say 455 deg/s = 7.94 rad/s, but GP8_JOINT_LIMITS stores 7.85 rad/s = 449.8 deg/s, 1.1 percent low.",
+    "Protection: DS-699-H page 1 splits IP67 wrist from IP54 body (IP65 with the XP package); HW1484385 page 4 states IP67 for the protective enclosure."
+  ]
+}

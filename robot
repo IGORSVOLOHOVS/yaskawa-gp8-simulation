@@ -20,7 +20,7 @@ usage() {
     echo "  build [profile]   - Build project (Profiles: release | debug | profile | pgo)"
     echo "  test              - Run C++26 unit test suite"
     echo "  benchmark         - Run performance benchmark & export bottleneck profiles"
-    echo "  run [web|ros]     - Launch Web 3D Dashboard (web) or ROS2/MoveIt scene (ros)"
+    echo "  run [web|ros|study] - Web dashboard, ROS2/MoveIt scene, or the Study Console"
     echo "  install           - Install built binaries to ${INSTALL_DIR}"
     echo "  uninstall         - Remove installed binaries"
     echo "  clean             - Clean build and profiling outputs"
@@ -44,6 +44,21 @@ case "${CMD}" in
         cmake --version
         g++ --version
         pkg-config --cflags eigen3
+        echo "--> Fetching external vendor assets (Yaskawa documents, upstream GP8 model)..."
+        FETCH_PY=""
+        for CANDIDATE in python3 python; do
+            if command -v "${CANDIDATE}" > /dev/null 2>&1 && "${CANDIDATE}" -c "import sys" > /dev/null 2>&1; then
+                FETCH_PY="${CANDIDATE}"
+                break
+            fi
+        done
+        if [ -z "${FETCH_PY}" ]; then
+            echo "    WARNING: no working python3/python found; skipping the external asset fetch."
+        else
+            "${FETCH_PY}" "${PROJECT_DIR}/tools/fetch_external_assets.py" --offline-ok || true
+            echo "--> External assets live in ${PROJECT_DIR}/assets/downloads (git-ignored)."
+            echo "    See docs/EXTERNAL_ASSETS.md; a network failure here is a warning, never a build failure."
+        fi
         echo "--> Environment initialization complete!"
         ;;
 
@@ -59,7 +74,8 @@ case "${CMD}" in
 
         echo "--> Building Yaskawa C++26 Solver with Profile: [${PROFILE}]..."
         cmake -B "${BUILD_DIR}" -S "${CPP_DIR}" -DCMAKE_BUILD_TYPE="${PROFILE}"
-        cmake --build "${BUILD_DIR}" -j$(nproc)
+        NPROC=$(nproc 2>/dev/null || echo 2)
+        cmake --build "${BUILD_DIR}" -j${NPROC}
         echo "--> Build finished successfully! Executables located in ${BUILD_DIR}"
         ;;
 
@@ -72,6 +88,15 @@ case "${CMD}" in
         git config core.hooksPath .claude/hooks/git || true
         echo "--> Running C++26 Unit Tests..."
         "${BUILD_DIR}/test_cpp"
+        echo "--> Running Study Module Test Suites..."
+        STUDY_SUITES="test_study_cpp test_study_kinematics test_study_dynamics test_study_control test_study_dsp test_study_intelligence test_study_specification"
+        for suite in ${STUDY_SUITES}; do
+            echo "    --> ${suite}"
+            "${BUILD_DIR}/${suite}"
+        done
+        echo "--> Smoke-testing the study API catalogue..."
+        "${BUILD_DIR}/study_api" --describe > /dev/null
+        echo "--> Study API responded with a valid catalogue."
         ;;
 
     benchmark)
@@ -103,6 +128,13 @@ case "${CMD}" in
         if [ "${MODE}" == "ros" ]; then
             echo "--> Launching ROS 2 MoveIt Scene container..."
             "${PROJECT_DIR}/start_yaskawa_scene.sh"
+        elif [ "${MODE}" == "study" ]; then
+            if [ ! -f "${BUILD_DIR}/study_api" ] && [ ! -f "${BUILD_DIR}/study_api.exe" ]; then
+                echo "--> study_api not built yet. Building release..."
+                "${PROJECT_DIR}/robot" build release
+            fi
+            echo "--> Launching the Study Console (every course topic, live on this robot)..."
+            python3 "${CPP_DIR}/web/study_server.py" --port "${2:-8090}"
         else
             echo "--> Launching Standalone Web 3D Dashboard..."
             python3 "${CPP_DIR}/web/server.py"

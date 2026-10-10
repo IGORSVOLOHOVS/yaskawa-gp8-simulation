@@ -1,0 +1,219 @@
+{
+  "schema": 1,
+  "description": "External assets this repository deliberately does not keep in git: the Yaskawa GP7/GP8 documents and the upstream ROS-Industrial GP8 robot model. Fetched from their own source URLs by tools/fetch_external_assets.py.",
+  "download_dir": "assets/downloads",
+  "groups": [
+    {
+      "name": "documents",
+      "description": "Yaskawa GP7/GP8 datasheets and manuals - the paper the real robot parameters come from.",
+      "assets": [
+        {
+          "id": "doc_gp7_gp8_datasheet_logic_control",
+          "url": "https://cdn.logic-control.com/media/gp7_gp8.pdf",
+          "sha256": "e11eaf3e9785f6ab437411b7a5acbc0629d599f4c10a75c54d66e61ba1f36017",
+          "bytes": 1664986,
+          "path": "documents/gp7_gp8_datasheet_logic_control.pdf",
+          "kind": "document",
+          "why": "GP7/GP8 datasheet: the source of the specification table the solver is built on - payload 8 kg, reach 727 mm, repeatability +/-0.02 mm, robot mass 32 kg in the GP8 column (the 34 kg on the same row is the GP7), per-axis ranges and maximum speeds, allowable wrist moments R/B/T 17/17/10 N m and allowable wrist moments of inertia R/B/T 0.5/0.5/0.2 kg m^2; one of the two revisions kept side by side.",
+          "licence": "Specification document (C) Yaskawa America Inc., Motoman Robotics Division. Redistributed by nobody: this repository stores no copy and claims no rights - the file is fetched at init time from the host's own public URL. This copy is served by the distributor Logic Control (cdn.logic-control.com)."
+        },
+        {
+          "id": "doc_gp7_gp8_datasheet_motoman",
+          "url": "https://www.motoman.com/getmedia/1a40ce78-99c3-4e43-bbce-b9318263f464/GP7_GP8.pdf.aspx",
+          "sha256": "a62c54385541d43131cdc30f7676222dcd228259cf95b9831aea72fecef8fddc",
+          "bytes": 1558730,
+          "path": "documents/gp7_gp8_datasheet_motoman.pdf",
+          "kind": "document",
+          "why": "The publisher's own copy of the same GP7/GP8 datasheet. Both revisions are kept because they are two revisions of one document: holding them side by side is what lets a changed specification number be seen rather than assumed.",
+          "licence": "Specification document (C) Yaskawa America Inc., Motoman Robotics Division. Redistributed by nobody: this repository stores no copy and claims no rights - the file is fetched at init time from the host's own public URL. This copy is served by the publisher itself (www.motoman.com)."
+        },
+        {
+          "id": "doc_hw1484385_gp8_gp7_supplemental_instructions",
+          "url": "https://res.cloudinary.com/reshape-prod/image/upload/v1706300926/products/documents/o8go5smyhvld5yonsave.pdf",
+          "sha256": "6e1228e9f2dbe0aa5cb2a6c9d5072c6813fe931e4acd1a3d70c969cdf79f082b",
+          "bytes": 2522628,
+          "path": "documents/hw1484385_gp8_gp7_supplemental_instructions.pdf",
+          "kind": "document",
+          "why": "Yaskawa manual HW1484385, MOTOMAN-GP8/-GP7 Supplemental Instructions: the model-specific addendum to the general instruction manual (axis designations, installation and wiring detail for this exact model).",
+          "licence": "Specification document (C) Yaskawa America Inc., Motoman Robotics Division. Redistributed by nobody: this repository stores no copy and claims no rights - the file is fetched at init time from the host's own public URL. This copy is served from the Cloudinary bucket of a Yaskawa reseller's document portal."
+        },
+        {
+          "id": "doc_hw1483944_gp8_ar700_gp7_ar900_instructions",
+          "url": "https://res.cloudinary.com/reshape-prod/image/upload/v1706300922/products/documents/gbhrnafgidh8nyxxqqqd.pdf",
+          "sha256": "ad9b8895798a7d897fe2f513f6df81300ba22b41d1d849ae762d2caf1ad72084",
+          "bytes": 19672526,
+          "path": "documents/hw1483944_gp8_ar700_gp7_ar900_instructions.pdf",
+          "kind": "document",
+          "why": "Yaskawa manual HW1483944, MOTOMAN-GP8/AR700 and -GP7/AR900 Instructions: the full manipulator manual - transport, installation, wiring, maintenance and the dimensional and working-envelope drawings.",
+          "licence": "Specification document (C) Yaskawa America Inc., Motoman Robotics Division. Redistributed by nobody: this repository stores no copy and claims no rights - the file is fetched at init time from the host's own public URL. This copy is served from the Cloudinary bucket of a Yaskawa reseller's document portal."
+        }
+      ]
+    },
+    {
+      "name": "upstream_robot_model",
+      "description": "ros-industrial/motoman, branch noetic-devel, package motoman_gp8_support: the published GP8 meshes and xacro model.",
+      "assets": [
+        {
+          "id": "mesh_visual_gp8_base_link",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_base_link.stl",
+          "sha256": "704b3b09b4d948f68ade306357e29933453e760716b949fcefacdd1da816e6c4",
+          "bytes": 584984,
+          "path": "motoman_gp8_support/meshes/visual/gp8_base_link.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_base_link: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_1_s",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_1_s.stl",
+          "sha256": "3bfb02014a83690a7724e6ea378162431d56fca4ff536f9331eea7c7ef340036",
+          "bytes": 442484,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_1_s.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_1_s: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_2_l",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_2_l.stl",
+          "sha256": "521f448f29717011e6a0f89d9f9429b4f95e1439fb6938ee40ed4c4669156272",
+          "bytes": 1021484,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_2_l.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_2_l: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_3_u",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_3_u.stl",
+          "sha256": "13d212cc99fc47adf4e09054dc089be3b53f88c3da4293b5a64769de587ab986",
+          "bytes": 641784,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_3_u.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_3_u: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_4_r",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_4_r.stl",
+          "sha256": "7b16986bf8a07f8d4b4dc6fb61debe40f614aeaf74c71bd20830b2f27163b128",
+          "bytes": 756684,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_4_r.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_4_r: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_5_b",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_5_b.stl",
+          "sha256": "e6bfa28b82735be7b0f8ed7c39d22b6ad4da184fd6f76c899b525b0ea8c457fd",
+          "bytes": 146184,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_5_b.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_5_b: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_visual_gp8_link_6_t",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/visual/gp8_link_6_t.stl",
+          "sha256": "96b447d0b63871ef6a3a77521e49a54e577b59c7ec59cadf6966e58260fbd0dc",
+          "bytes": 31884,
+          "path": "motoman_gp8_support/meshes/visual/gp8_link_6_t.stl",
+          "kind": "mesh",
+          "why": "Upstream visual mesh for gp8_link_6_t: the original of the copy vendored in src/yaskawa_workcell_description/meshes/visual, so the vendored file can be diffed against its source.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_base_link",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_base_link.stl",
+          "sha256": "099b1b64261c19f17932024a6058175e3aaf7ca557fe9add20e70e593df4790e",
+          "bytes": 56984,
+          "path": "motoman_gp8_support/meshes/collision/gp8_base_link.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_base_link: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_1_s",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_1_s.stl",
+          "sha256": "8499491e394bd5e24ee1955a6b8908e797bb81b8a8c1794f1aab4c1707314924",
+          "bytes": 108784,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_1_s.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_1_s: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_2_l",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_2_l.stl",
+          "sha256": "59eead879be86ee475dd54beced66638e3290e71e5da68110639be2efb0ac4fd",
+          "bytes": 100084,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_2_l.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_2_l: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_3_u",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_3_u.stl",
+          "sha256": "800f774f340d36abac15a7e59026208e70f86bc855677808fdd3106f65d52878",
+          "bytes": 165184,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_3_u.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_3_u: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_4_r",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_4_r.stl",
+          "sha256": "891c6f5d35a4c3fb7510eeb54bf248ed0ebe05e598a4fd007dd8f6ee92ae7ff1",
+          "bytes": 139384,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_4_r.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_4_r: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_5_b",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_5_b.stl",
+          "sha256": "fb6358a008bbcf0b2765f38ae75f79eda7d4b378223566831ca65daf60222bee",
+          "bytes": 26484,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_5_b.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_5_b: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "mesh_collision_gp8_link_6_t",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/meshes/collision/gp8_link_6_t.stl",
+          "sha256": "ffcc7084aaa82e2b285110f0bac3bc2b4663dc704650b83aae66a75bb667d368",
+          "bytes": 13884,
+          "path": "motoman_gp8_support/meshes/collision/gp8_link_6_t.stl",
+          "kind": "mesh",
+          "why": "Upstream collision mesh for gp8_link_6_t: the decimated hull the ROS-Industrial package uses for collision checking, and the original of the vendored copy in src/yaskawa_workcell_description/meshes/collision.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "urdf_gp8_xacro",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/urdf/gp8.xacro",
+          "sha256": "2386ca200c2bd6258aca4271b0cef96df4df493905fdbfe1567e61a0d65234f2",
+          "bytes": 219,
+          "path": "motoman_gp8_support/urdf/gp8.xacro",
+          "kind": "urdf",
+          "why": "Upstream top-level xacro that instantiates the GP8 macro: the reference for the joint names and mesh paths the published model expects.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        },
+        {
+          "id": "urdf_gp8_macro_xacro",
+          "url": "https://raw.githubusercontent.com/ros-industrial/motoman/noetic-devel/motoman_gp8_support/urdf/gp8_macro.xacro",
+          "sha256": "77207d0bbd06dc20517b2fc289e3a01760a8a9f2922b6b08e744979eab858df2",
+          "bytes": 6138,
+          "path": "motoman_gp8_support/urdf/gp8_macro.xacro",
+          "kind": "urdf",
+          "why": "Upstream GP8 xacro macro: the authoritative link and joint tree, joint limits and mesh references of the published robot model, used to check this repository's own kinematic parameters against it.",
+          "licence": "(C) the ros-industrial/motoman authors (Eric Marcil, G.A. vd. Hoorn), BSD-3-Clause as declared in motoman_gp8_support/package.xml. Redistributed by nobody: fetched from GitHub raw at ros-industrial/motoman@noetic-devel."
+        }
+      ]
+    }
+  ]
+}

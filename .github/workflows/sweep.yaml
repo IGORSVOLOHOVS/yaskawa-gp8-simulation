@@ -1,5 +1,10 @@
 name: sweep
 on:
+  push:
+    branches: [test, release]
+  pull_request:
+    types: [closed]
+    branches: [test]
   schedule:
     - cron: '0 4 * * 1'
   workflow_dispatch:
@@ -8,12 +13,19 @@ jobs:
   sweep:
     name: sweep
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Prune merged branches
+      - name: Prune & Delete Merged Feature Branches
         run: |
-          git fetch --prune origin
+          git fetch --all --prune
+          for branch in $(git branch -r --merged origin/test | grep -vE 'origin/master|origin/main|origin/test|origin/release|HEAD'); do
+            b_name="${branch#origin/}"
+            echo "Deleting merged remote branch: $b_name"
+            git push origin --delete "$b_name" || true
+          done
           echo "Branch sweep complete"
