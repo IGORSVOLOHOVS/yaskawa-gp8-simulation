@@ -95,6 +95,10 @@ Field rules:
 - `params[].type` and `outputs[].type` are from the type vocabulary below.
   Every numeric param carries `min`, `max`, `default` and a `unit`, because the
   UI builds its slider from those four values alone.
+- `unit` is **always emitted**, including for dimensionless quantities, where it
+  is the empty string. A sample count, a joint index and a loop gain have no
+  unit; saying so explicitly is what lets the UI lay every parameter out the
+  same way instead of special-casing a missing key.
 
 ## 3. Type vocabulary
 

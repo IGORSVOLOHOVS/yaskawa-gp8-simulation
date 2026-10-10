@@ -29,6 +29,16 @@ target_link_libraries(yaskawa_kinematics PUBLIC Eigen3::Eigen Threads::Threads)
 add_library(yaskawa_study STATIC
     src/study/module_registry.cpp
     src/study/spatial_math.cpp
+    src/study/dh_kinematics.cpp
+    src/study/jacobian_statics.cpp
+    src/study/dynamics.cpp
+    src/study/trajectory_profiles.cpp
+    src/study/control_system.cpp
+    src/study/digital_control.cpp
+    src/study/dsp_system.cpp
+    src/study/sensing_models.cpp
+    src/study/vision_camera.cpp
+    src/study/learning_models.cpp
 )
 target_link_libraries(yaskawa_study PUBLIC yaskawa_kinematics Eigen3::Eigen Threads::Threads)
 
@@ -44,6 +54,18 @@ target_link_libraries(study_api PRIVATE yaskawa_study Eigen3::Eigen Threads::Thr
 add_executable(test_study_cpp src/test_study_modules.cpp)
 target_link_libraries(test_study_cpp PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
 
+# One test executable per topic area, so a failure names its own subject.
+add_executable(test_study_kinematics src/test_study_kinematics.cpp)
+target_link_libraries(test_study_kinematics PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+add_executable(test_study_dynamics src/test_study_dynamics.cpp)
+target_link_libraries(test_study_dynamics PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+add_executable(test_study_control src/test_study_control.cpp)
+target_link_libraries(test_study_control PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+add_executable(test_study_dsp src/test_study_dsp.cpp)
+target_link_libraries(test_study_dsp PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+add_executable(test_study_intelligence src/test_study_intelligence.cpp)
+target_link_libraries(test_study_intelligence PRIVATE yaskawa_study Eigen3::Eigen Threads::Threads)
+
 # Profile-Specific Compilation Flags
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(yaskawa_kinematics PRIVATE -O3 -march=native -ffast-math)
@@ -54,6 +76,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(yaskawa_study PRIVATE -O3 -march=native)
     target_compile_options(study_api PRIVATE -O3 -march=native)
     target_compile_options(test_study_cpp PRIVATE -O3 -march=native)
+    target_compile_options(test_study_kinematics PRIVATE -O3 -march=native)
+    target_compile_options(test_study_dynamics PRIVATE -O3 -march=native)
+    target_compile_options(test_study_control PRIVATE -O3 -march=native)
+    target_compile_options(test_study_dsp PRIVATE -O3 -march=native)
+    target_compile_options(test_study_intelligence PRIVATE -O3 -march=native)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(yaskawa_kinematics PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(benchmark_cpp PRIVATE -O0 -g -fsanitize=address)
@@ -63,6 +90,16 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(yaskawa_study PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(study_api PRIVATE -O0 -g -fsanitize=address)
     target_compile_options(test_study_cpp PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_kinematics PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_dynamics PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_control PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_dsp PRIVATE -O0 -g -fsanitize=address)
+    target_compile_options(test_study_intelligence PRIVATE -O0 -g -fsanitize=address)
+    target_link_libraries(test_study_kinematics PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_dynamics PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_control PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_dsp PRIVATE -fsanitize=address)
+    target_link_libraries(test_study_intelligence PRIVATE -fsanitize=address)
     target_link_libraries(study_api PRIVATE -fsanitize=address)
     target_link_libraries(test_study_cpp PRIVATE -fsanitize=address)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
@@ -74,6 +111,16 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Profile")
     target_compile_options(yaskawa_study PRIVATE -O3 -pg -g -march=native)
     target_compile_options(study_api PRIVATE -O3 -pg -g -march=native)
     target_compile_options(test_study_cpp PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_kinematics PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_dynamics PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_control PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_dsp PRIVATE -O3 -pg -g -march=native)
+    target_compile_options(test_study_intelligence PRIVATE -O3 -pg -g -march=native)
+    target_link_libraries(test_study_kinematics PRIVATE -pg)
+    target_link_libraries(test_study_dynamics PRIVATE -pg)
+    target_link_libraries(test_study_control PRIVATE -pg)
+    target_link_libraries(test_study_dsp PRIVATE -pg)
+    target_link_libraries(test_study_intelligence PRIVATE -pg)
     target_link_libraries(study_api PRIVATE -pg)
     target_link_libraries(test_study_cpp PRIVATE -pg)
 elseif(CMAKE_BUILD_TYPE STREQUAL "PGO_Generate")

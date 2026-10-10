@@ -157,9 +157,11 @@ struct ParamSpec {
         json::Value out = json::Value::object();
         out.set("name", json::Value(name));
         out.set("type", json::Value(type));
-        if (!unit.empty()) {
-            out.set("unit", json::Value(unit));
-        }
+        // The unit is always declared, even when the quantity is dimensionless:
+        // a sample count, a joint index and a loop gain have no unit, and an empty
+        // string says so explicitly. The generated UI needs the key to be present
+        // so it can lay a slider out the same way for every parameter.
+        out.set("unit", json::Value(unit));
         if (has_range) {
             out.set("min", json::Value(min));
             out.set("max", json::Value(max));

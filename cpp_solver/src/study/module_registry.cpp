@@ -1,6 +1,16 @@
 #include "study/module_registry.hpp"
 
 #include "study/spatial_math.hpp"
+#include "study/dh_kinematics.hpp"
+#include "study/jacobian_statics.hpp"
+#include "study/dynamics.hpp"
+#include "study/trajectory_profiles.hpp"
+#include "study/control_system.hpp"
+#include "study/digital_control.hpp"
+#include "study/dsp_system.hpp"
+#include "study/sensing_models.hpp"
+#include "study/vision_camera.hpp"
+#include "study/learning_models.hpp"
 
 #include <chrono>
 #include <exception>
@@ -198,7 +208,21 @@ json::Value ModuleRegistry::handle(const json::Value& request) const {
 
 ModuleRegistry build_default_registry() {
     ModuleRegistry registry;
+    // Robotics Modelling (3883)
     registry.add(std::make_unique<SpatialMathModule>());
+    registry.add(std::make_unique<DhKinematicsModule>());
+    registry.add(std::make_unique<JacobianStaticsModule>());
+    registry.add(std::make_unique<DynamicsModule>());
+    registry.add(std::make_unique<TrajectoryProfilesModule>());
+    // Robot Control and Feedback Systems (3884)
+    registry.add(std::make_unique<ControlSystemModule>());
+    registry.add(std::make_unique<DigitalControlModule>());
+    // Digital Signal Processing (3882)
+    registry.add(std::make_unique<DspSystemModule>());
+    // Sensing, vision and Intelligent Systems 1 (3884 sessions 27-28, 2953)
+    registry.add(std::make_unique<SensingModelsModule>());
+    registry.add(std::make_unique<VisionCameraModule>());
+    registry.add(std::make_unique<LearningModelsModule>());
     return registry;
 }
 
